@@ -12,7 +12,7 @@ rust-version = "1.95"
 
 [lib]
 name = "app_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+crate-type = ["rlib"]
 
 [build-dependencies]
 tauri-build = { version = "3.0.0-alpha.3" }

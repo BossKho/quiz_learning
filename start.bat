@@ -1,16 +1,14 @@
 @echo off
-title Quiz Learning Pro - Enterprise Practice Workspace
+title Quiz Learning Pro - Enterprise Platform
 cd /d "%~dp0"
+
+if exist "QuizLearningPro.exe" (
+    echo Launching native Windows application: QuizLearningPro.exe...
+    start "" "QuizLearningPro.exe"
+    exit /b
+)
+
+echo QuizLearningPro.exe not found, falling back to dev server...
 set "PATH=C:\Program Files\nodejs;C:\Users\%USERNAME%\.cargo\bin;%PATH%"
-
-echo ========================================================
-echo       QUIZ LEARNING PRO - ENTERPRISE PLATFORM
-echo ========================================================
-echo [1/2] Verifying SQLite question bank and dependencies...
-echo [2/2] Launching application on http://localhost:5173...
-echo.
-echo Press Ctrl+C in this terminal when you want to stop the app.
-echo ========================================================
-
 start http://localhost:5173
 npm.cmd run dev
