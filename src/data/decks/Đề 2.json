@@ -1,0 +1,1626 @@
+{
+ "title": "Đề 2",
+ "source": "Đề 2 _ Quizizz.pdf",
+ "questions": [
+  {
+   "id": "q061",
+   "type": "single",
+   "question": "What is the goal of brainstorming?",
+   "options": [
+    "To find the one and only solution to a problem",
+    "To generate a large variety of ideas",
+    "To include everyone",
+    "To write an excellent essay"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Mục tiêu của brainstorming là tạo ra càng nhiều ý tưởng đa dạng càng tốt, chưa đánh giá đúng sai; việc chọn giải pháp tốt nhất đến ở bước sau.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Mục tiêu của động não (brainstorming) là gì?",
+    "options": [
+     "Tìm ra giải pháp duy nhất cho một vấn đề",
+     "Tạo ra nhiều ý tưởng đa dạng",
+     "Để mọi người cùng tham gia",
+     "Viết một bài luận xuất sắc"
+    ]
+   }
+  },
+  {
+   "id": "q062",
+   "type": "single",
+   "question": "The method in which each side hives up something of value to help solve a problem.",
+   "options": [
+    "Compromise",
+    "Consensus",
+    "Constraint",
+    "Problem solving"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Compromise (thỏa hiệp) là mỗi bên nhượng bộ một phần để đạt giải pháp chung; Consensus là tất cả cùng đồng thuận hoàn toàn.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Phương pháp trong đó mỗi bên nhượng bộ một thứ có giá trị để giúp giải quyết vấn đề.",
+    "options": [
+     "Thỏa hiệp",
+     "Đồng thuận",
+     "Ràng buộc",
+     "Giải quyết vấn đề"
+    ]
+   }
+  },
+  {
+   "id": "q063",
+   "type": "single",
+   "question": "In this step of the writing process, you are writing down all of your ideas and often using a graphic organizer…",
+   "options": [
+    "Brainstorming",
+    "Drafting",
+    "Revision",
+    "Publishing"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Brainstorming (prewriting) là bước ghi lại mọi ý tưởng, thường dùng graphic organizer, trước khi bắt đầu drafting.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Ở bước này của quá trình viết, bạn ghi ra tất cả ý tưởng của mình và thường dùng sơ đồ tổ chức ý tưởng (graphic organizer)…",
+    "options": [
+     "Động não",
+     "Viết nháp",
+     "Chỉnh sửa",
+     "Xuất bản"
+    ]
+   }
+  },
+  {
+   "id": "q064",
+   "type": "single",
+   "question": "Is brainstorming only for the beginning of the writing process or can it be done at any time?",
+   "options": [
+    "It can only be done at the beginning.",
+    "It can be done at any time.",
+    "You shouldn't brainstorm at all",
+    "None of above"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Brainstorming có thể thực hiện bất cứ lúc nào trong quá trình viết hoặc làm việc khi cần thêm ý tưởng, không chỉ lúc bắt đầu.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": false,
+   "vi": {
+    "question": "Brainstorming chỉ dành cho giai đoạn đầu của quá trình viết hay có thể thực hiện bất cứ lúc nào?",
+    "options": [
+     "Chỉ có thể thực hiện ở giai đoạn đầu.",
+     "Có thể thực hiện bất cứ lúc nào.",
+     "Bạn hoàn toàn không nên brainstorm",
+     "Không có đáp án nào ở trên"
+    ]
+   }
+  },
+  {
+   "id": "q065",
+   "type": "single",
+   "question": "You should do the worst tasks first while you're alert and not tired.",
+   "options": [
+    "TRUE",
+    "FALSE",
+    "Maybe True or False",
+    "No option is correct"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Đây là nguyên tắc \"Eat the frog\": làm việc khó/khó chịu nhất trước khi còn tỉnh táo và nhiều năng lượng, tránh trì hoãn.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Bạn nên làm những việc tệ nhất trước khi bạn còn tỉnh táo và chưa mệt.",
+    "options": [
+     "ĐÚNG",
+     "SAI",
+     "Có thể Đúng hoặc Sai",
+     "Không có đáp án nào đúng"
+    ]
+   }
+  },
+  {
+   "id": "q006",
+   "type": "single",
+   "question": "Which statement best describes a procrastinator?",
+   "options": [
+    "One who starts to work as soon as he receives the assignment.",
+    "One who delays working on an assignment until it is almost too late.",
+    "One who takes on too many assignments and does not know where to start.",
+    "One who forgets his assignment and does not know what to do."
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Procrastinator là người trì hoãn công việc đến sát deadline mới làm.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Phát biểu nào mô tả đúng nhất một người hay trì hoãn (procrastinator)?",
+    "options": [
+     "Người bắt đầu làm việc ngay khi nhận được nhiệm vụ.",
+     "Người trì hoãn làm nhiệm vụ cho đến khi gần như quá muộn.",
+     "Người nhận quá nhiều nhiệm vụ và không biết bắt đầu từ đâu.",
+     "Người quên nhiệm vụ của mình và không biết phải làm gì."
+    ]
+   }
+  },
+  {
+   "id": "q066",
+   "type": "single",
+   "question": "Nhung has been studying for her PM test for an hour. She knows she needs to study for at least another hour, but she is feeling distracted. Her phone keeps buzzing with text messages, and she's hungry. What would be the best thing for Nhung to do now?",
+   "options": [
+    "She should keep studying until she falls asleep.",
+    "She should take a quick break, so she can get a snack and respond to her texts before she goes back to studying.",
+    "She should talk to her friend, eat a snack and keep studying all at the same time.",
+    "She should stop studying and make plans to see her friends."
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Nghỉ ngắn để xử lý nguyên nhân gây mất tập trung (đói, tin nhắn) rồi quay lại học giúp tập trung tốt hơn; multitasking hay bỏ học đều kém hiệu quả.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Nhung đã học cho bài kiểm tra PM được một tiếng. Cô biết mình cần học thêm ít nhất một tiếng nữa, nhưng đang bị phân tâm. Điện thoại liên tục rung vì tin nhắn, và cô đang đói. Điều tốt nhất Nhung nên làm lúc này là gì?",
+    "options": [
+     "Cô nên tiếp tục học cho đến khi ngủ gục.",
+     "Cô nên nghỉ giải lao nhanh để ăn nhẹ và trả lời tin nhắn, rồi quay lại học tiếp.",
+     "Cô nên vừa nói chuyện với bạn, vừa ăn nhẹ, vừa học cùng lúc.",
+     "Cô nên dừng học và lên kế hoạch đi gặp bạn bè."
+    ]
+   }
+  },
+  {
+   "id": "q067",
+   "type": "single",
+   "question": "feelings, often influenced by our beliefs, that cause us to respond in a particular way",
+   "options": [
+    "introvert",
+    "attitude",
+    "extrovert",
+    "body language"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Attitude là cảm xúc, thái độ chịu ảnh hưởng từ niềm tin, khiến ta phản ứng theo một cách nhất định.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Những cảm nhận, thường bị ảnh hưởng bởi niềm tin của chúng ta, khiến ta phản ứng theo một cách nhất định",
+    "options": [
+     "người hướng nội",
+     "thái độ",
+     "người hướng ngoại",
+     "ngôn ngữ cơ thể"
+    ]
+   }
+  },
+  {
+   "id": "q068",
+   "type": "single",
+   "question": "Which of the following should be avoided in communication?",
+   "options": [
+    "Feedback on time",
+    "Argue with customers",
+    "Negotiate with customers",
+    "Credibility"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Tranh cãi (argue) với khách hàng làm mất thiện cảm và niềm tin, nên cần tránh; còn feedback đúng hạn, đàm phán và uy tín (credibility) là những điều nên làm.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Điều nào sau đây nên tránh trong giao tiếp?",
+    "options": [
+     "Phản hồi (feedback) đúng hạn",
+     "Tranh cãi với khách hàng",
+     "Đàm phán với khách hàng",
+     "Sự uy tín"
+    ]
+   }
+  },
+  {
+   "id": "q069",
+   "type": "single",
+   "question": "Who can perform face to face communication?",
+   "options": [
+    "Onsiter",
+    "Developer",
+    "Manager",
+    "All of above"
+   ],
+   "answer": [
+    3
+   ],
+   "explanation": "Giao tiếp trực tiếp (face to face) không giới hạn vai trò, onsiter, developer hay manager đều có thể và nên thực hiện.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": false,
+   "vi": {
+    "question": "Ai có thể thực hiện giao tiếp trực tiếp (face to face communication)?",
+    "options": [
+     "Onsiter",
+     "Developer",
+     "Manager",
+     "Tất cả các đáp án trên"
+    ]
+   }
+  },
+  {
+   "id": "q070",
+   "type": "single",
+   "question": "What should we do when customer doesn't reply email",
+   "options": [
+    "Ping/Push customer via Onsiter",
+    "Send more email",
+    "Wait for customer reply",
+    "A and C"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Khi customer không trả lời email, nên chủ động nhờ Onsiter (người làm việc trực tiếp tại phía khách hàng) nhắc/thúc khách hàng thay vì chỉ chờ đợi hoặc gửi thêm email.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Nên làm gì khi khách hàng không trả lời email?",
+    "options": [
+     "Nhắc/thúc khách hàng qua Onsiter",
+     "Gửi thêm email",
+     "Chờ khách hàng trả lời",
+     "A và C"
+    ]
+   }
+  },
+  {
+   "id": "q009",
+   "type": "single",
+   "question": "Good listening skills include:",
+   "options": [
+    "a message, a sender, and a reveiver.",
+    "labeling, cultural sensitivity, and talking slowly.",
+    "verbal message, written communication and a receiver",
+    "showing interst, hearing the message, and not interrupting"
+   ],
+   "answer": [
+    3
+   ],
+   "explanation": "Kỹ năng lắng nghe tốt gồm thể hiện sự quan tâm, thực sự nghe thông điệp và không ngắt lời người nói. Các lựa chọn khác mô tả thành phần của quá trình giao tiếp chứ không phải kỹ năng lắng nghe.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Kỹ năng lắng nghe tốt bao gồm:",
+    "options": [
+     "một thông điệp, một người gửi và một người nhận.",
+     "dán nhãn, nhạy cảm văn hóa và nói chậm.",
+     "thông điệp bằng lời, giao tiếp bằng văn bản và một người nhận",
+     "thể hiện sự quan tâm, nghe thông điệp và không ngắt lời"
+    ]
+   }
+  },
+  {
+   "id": "q071",
+   "type": "single",
+   "question": "What is Integration testing?",
+   "options": [
+    "In this method, your software is compiled as a whole and then tested as a whole. This testing strategy checks the functionality, security, portability, amongst others.",
+    "It focuses on the construction and design of the software. You need to see that the integrated units are working without errors or not.",
+    "Both",
+    "None"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Integration testing tập trung vào việc ghép các unit lại và kiểm tra chúng hoạt động cùng nhau không lỗi. Đáp án thứ nhất (test toàn bộ phần mềm gồm functionality, security, portability) là system testing.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": false,
+   "vi": {
+    "question": "Kiểm thử tích hợp (Integration testing) là gì?",
+    "options": [
+     "Trong phương pháp này, phần mềm được biên dịch thành một tổng thể rồi kiểm thử như một tổng thể. Chiến lược kiểm thử này kiểm tra chức năng, bảo mật, tính khả chuyển (portability), cùng các yếu tố khác.",
+     "Nó tập trung vào cấu trúc và thiết kế của phần mềm. Bạn cần xem các unit được tích hợp có hoạt động mà không có lỗi hay không.",
+     "Cả hai",
+     "Không có"
+    ]
+   }
+  },
+  {
+   "id": "q072",
+   "type": "single",
+   "question": "How do you declare a mock object using gmock?",
+   "options": [
+    "Use the \"mock_object\" keyword",
+    "Use the \"mock()\" function",
+    "Use the \"create_mock()\" function",
+    "Use the \"MOCK_METHOD()\" macro"
+   ],
+   "answer": [
+    3
+   ],
+   "explanation": "Trong gmock, mock class được khai báo bằng macro MOCK_METHOD() (bản cũ là MOCK_METHODn) cho từng method cần mock; không có keyword hay hàm mock_object/create_mock.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Làm thế nào để khai báo một mock object bằng gmock?",
+    "options": [
+     "Dùng từ khóa \"mock_object\"",
+     "Dùng hàm \"mock()\"",
+     "Dùng hàm \"create_mock()\"",
+     "Dùng macro \"MOCK_METHOD()\""
+    ]
+   }
+  },
+  {
+   "id": "q073",
+   "type": "single",
+   "question": "What is Dynamic Testing?",
+   "options": [
+    "The main objective of this testing is to confirm that the software product works in conformance with the business requirements. This testing is also called an Execution technique or validation testing.",
+    "It is a high level of testing that focuses on the behavior of the software. It involves testing from an external or end-user perspective.",
+    "It is a testing technique in which software’s internal structure, design, and coding are tested to verify input-output flow and improve design, usability, and security.",
+    "All"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Dynamic Testing là kiểm thử bằng cách thực thi phần mềm để xác nhận nó hoạt động đúng yêu cầu, còn gọi là Execution technique hay validation testing.",
+   "note": "⚠ Đề khoanh lựa chọn \"high level of testing ... end-user perspective\" (đó là định nghĩa Black Box Testing), nhưng lựa chọn đầu tiên \"confirm that the software product works in conformance with the business requirements ... also called an Execution technique or validation testing\" mới đúng định nghĩa Dynamic Testing.",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Kiểm thử động (Dynamic Testing) là gì?",
+    "options": [
+     "Mục tiêu chính của loại kiểm thử này là xác nhận sản phẩm phần mềm hoạt động đúng theo yêu cầu nghiệp vụ (business requirements). Loại kiểm thử này còn được gọi là kỹ thuật thực thi (Execution technique) hoặc kiểm thử xác nhận (validation testing).",
+     "Là mức kiểm thử cao, tập trung vào hành vi của phần mềm. Kiểm thử từ góc nhìn bên ngoài hoặc góc nhìn người dùng cuối (end-user).",
+     "Là kỹ thuật kiểm thử trong đó cấu trúc bên trong, thiết kế và mã nguồn của phần mềm được kiểm thử để xác minh luồng đầu vào - đầu ra (input-output flow) và cải thiện thiết kế, khả năng sử dụng (usability) và bảo mật.",
+     "Tất cả"
+    ]
+   }
+  },
+  {
+   "id": "q074",
+   "type": "single",
+   "question": "In integration testing, what is a \"unit\"?",
+   "options": [
+    "A module in the source code",
+    "The entire application",
+    "A test case",
+    "A class in the application"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Trong integration testing, unit là một module trong source code; các module được ghép lại để test giao tiếp giữa chúng.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Trong kiểm thử tích hợp (integration testing), \"unit\" là gì?",
+    "options": [
+     "Một module trong mã nguồn",
+     "Toàn bộ ứng dụng",
+     "Một test case",
+     "Một class trong ứng dụng"
+    ]
+   }
+  },
+  {
+   "id": "q075",
+   "type": "single",
+   "question": "What Software development Methodology focuses on comprehensive documentation?",
+   "options": [
+    "Waterfall",
+    "RAD",
+    "Agile",
+    "SCRUM"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Waterfall yêu cầu tài liệu đầy đủ ở từng phase trước khi chuyển sang phase tiếp theo; Agile/Scrum/RAD ưu tiên working software hơn documentation.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Phương pháp luận phát triển phần mềm (Software development Methodology) nào tập trung vào tài liệu đầy đủ, toàn diện?",
+    "options": [
+     "Waterfall",
+     "RAD",
+     "Agile",
+     "SCRUM"
+    ]
+   }
+  },
+  {
+   "id": "q076",
+   "type": "single",
+   "question": "Why is the implementation and coding phase of the software development life cycle important?",
+   "options": [
+    "This is when the product is tested for errors.",
+    "The actual product is created, and coding of the product gives it operational capability.",
+    "It provides customers with their requirements.",
+    "Design of the product cannot happen if implementation and coding aren't complete."
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Implementation/coding là giai đoạn sản phẩm thực sự được tạo ra; code biến thiết kế thành phần mềm có thể vận hành được.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Tại sao giai đoạn triển khai và lập trình (implementation and coding) trong vòng đời phát triển phần mềm (SDLC) lại quan trọng?",
+    "options": [
+     "Đây là lúc sản phẩm được kiểm thử để tìm lỗi.",
+     "Sản phẩm thực tế được tạo ra, và việc lập trình giúp sản phẩm có khả năng vận hành.",
+     "Nó cung cấp cho khách hàng các yêu cầu của họ.",
+     "Không thể thiết kế sản phẩm nếu chưa hoàn thành triển khai và lập trình."
+    ]
+   }
+  },
+  {
+   "id": "q077",
+   "type": "single",
+   "question": "Which of the following is a software development model, based on SDLC concept?",
+   "options": [
+    "Waterfall",
+    "Extreme Programming",
+    "Scrum",
+    "Rational Unified Process (RUP)"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Waterfall là mô hình phát triển phần mềm kinh điển xây dựng trực tiếp từ các phase tuần tự của SDLC (requirement, design, implementation, testing, deployment, maintenance).",
+   "note": "Người đánh dấu cũng gạch chân Scrum như phương án thay thế. Thực tế XP, Scrum, RUP đều là mô hình/phương pháp dựa trên SDLC, nhưng Waterfall là đáp án tiêu biểu nhất nên giữ Waterfall.",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Đâu là mô hình phát triển phần mềm dựa trên khái niệm SDLC?",
+    "options": [
+     "Waterfall",
+     "Extreme Programming",
+     "Scrum",
+     "Rational Unified Process (RUP)"
+    ]
+   }
+  },
+  {
+   "id": "q078",
+   "type": "single",
+   "question": "When an activity cannot be estimated with confidence, the work within activity is decomposed further. What is the estimate method ?",
+   "options": [
+    "Analogous",
+    "Parametric",
+    "Equivalence Partitioning​",
+    "Bottom-Up"
+   ],
+   "answer": [
+    3
+   ],
+   "explanation": "Bottom-Up estimating chia nhỏ công việc (decompose) thành các phần đủ chi tiết để ước lượng, rồi cộng dồn lên.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Khi một hoạt động không thể ước lượng một cách chắc chắn, công việc trong hoạt động đó được chia nhỏ hơn nữa. Đây là phương pháp ước lượng nào?",
+    "options": [
+     "Ước lượng tương tự",
+     "Ước lượng tham số",
+     "Phân vùng tương đương",
+     "Ước lượng từ dưới lên"
+    ]
+   }
+  },
+  {
+   "id": "q079",
+   "type": "single",
+   "question": "___ must plan, motivate, organize and control the practitioners who do software work.",
+   "options": [
+    "Project Managers",
+    "Senior Managers",
+    "Customers",
+    "End Users"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Project Manager chịu trách nhiệm lập kế hoạch, tạo động lực, tổ chức và kiểm soát những người trực tiếp làm phần mềm.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "___ phải lập kế hoạch, tạo động lực, tổ chức và kiểm soát những người thực hiện công việc phần mềm.",
+    "options": [
+     "Quản lý dự án",
+     "Quản lý cấp cao",
+     "Khách hàng",
+     "Người dùng cuối"
+    ]
+   }
+  },
+  {
+   "id": "q080",
+   "type": "single",
+   "question": "For diag application: + Optimistic : is 3MM + Most likely is 4MM + Pessimistic , we need 8MM By using Three-point (Beta Distribution) method, MM for diag application is",
+   "options": [
+    "4",
+    "2",
+    "4,5",
+    "3"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Theo công thức Beta (PERT): E = (O + 4M + P)/6 = (3 + 4*4 + 8)/6 = 27/6 = 4,5 MM; đề khoanh 4.",
+   "note": "⚠ Đề khoanh '4', nhưng '4,5' đúng hơn vì theo công thức Beta Distribution (O + 4M + P)/6 = (3 + 16 + 8)/6 = 4,5. Đáp án 4 chỉ đúng nếu làm tròn hoặc lấy Most likely.",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Với ứng dụng diag: + Lạc quan (Optimistic): 3MM + Khả dĩ nhất (Most likely): 4MM + Bi quan (Pessimistic): cần 8MM. Dùng phương pháp ước lượng ba điểm (Three-point, Beta Distribution), MM cho ứng dụng diag là",
+    "options": [
+     "4",
+     "2",
+     "4,5",
+     "3"
+    ]
+   }
+  },
+  {
+   "id": "q081",
+   "type": "single",
+   "question": "A method of estimating that also called as Program evaluation and review technique",
+   "options": [
+    "Analogous",
+    "Parametric",
+    "Three-point",
+    "Bottom-Up"
+   ],
+   "answer": [
+    2
+   ],
+   "explanation": "PERT (Program Evaluation and Review Technique) chính là ước lượng Three-point, dùng công thức E = (O + 4M + P) / 6 từ ba giá trị optimistic, most likely, pessimistic.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Phương pháp ước lượng nào còn được gọi là Kỹ thuật đánh giá và rà soát chương trình (Program Evaluation and Review Technique - PERT)?",
+    "options": [
+     "Tương tự",
+     "Tham số",
+     "Ba điểm",
+     "Từ dưới lên"
+    ]
+   }
+  },
+  {
+   "id": "q082",
+   "type": "single",
+   "question": "A method of estimating that using historical data from a similar activity or a project",
+   "options": [
+    "Analogous",
+    "Parametric",
+    "Three-point",
+    "Bottom-Up"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Analogous estimating dựa trên dữ liệu lịch sử của một activity/project tương tự để ước lượng (thường kết hợp expert judgement).",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Phương pháp ước lượng sử dụng dữ liệu lịch sử từ một hoạt động hoặc dự án tương tự",
+    "options": [
+     "Ước lượng tương tự",
+     "Ước lượng tham số",
+     "Ước lượng ba điểm",
+     "Ước lượng từ dưới lên"
+    ]
+   }
+  },
+  {
+   "id": "q083",
+   "type": "single",
+   "question": "According to ASPICE, what has tracability to \"System Requirement\"?",
+   "options": [
+    "Software requirements",
+    "System qualification test specification",
+    "System architecture",
+    "All above"
+   ],
+   "answer": [
+    3
+   ],
+   "explanation": "Theo ASPICE, System Requirements phải trace được tới System architecture (SYS.3), Software requirements (SWE.1) và System qualification test specification (SYS.5).",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": false,
+   "vi": {
+    "question": "Theo ASPICE, cái gì có tính truy vết (traceability) tới \"Yêu cầu hệ thống (System Requirement)\"?",
+    "options": [
+     "Yêu cầu phần mềm",
+     "Đặc tả kiểm thử đánh giá hệ thống",
+     "Kiến trúc hệ thống",
+     "Tất cả các đáp án trên"
+    ]
+   }
+  },
+  {
+   "id": "q084",
+   "type": "single",
+   "question": "Based on the NASA statistics on budget and schedule overrun vs. time spent on requirements process, what is the recommended amount of time to spend on the requirements stage?",
+   "options": [
+    "0% of the total time spent on the project",
+    "5-10% of the total time spent on the project",
+    "20% of the total time spent on the project",
+    "The same amount as you expect to spend on testing."
+   ],
+   "answer": [
+    2
+   ],
+   "explanation": "Thống kê của NASA cho thấy các dự án đầu tư ít thời gian cho requirements bị vượt budget/schedule rất nhiều; mức overrun giảm rõ khi dành khoảng 20% thời gian (hoặc chi phí) cho giai đoạn requirements.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Dựa trên thống kê của NASA về vượt ngân sách và tiến độ so với thời gian dành cho quy trình yêu cầu (requirements), thời gian khuyến nghị dành cho giai đoạn yêu cầu là bao nhiêu?",
+    "options": [
+     "0% tổng thời gian dự án",
+     "5-10% tổng thời gian dự án",
+     "20% tổng thời gian dự án",
+     "Bằng với thời gian bạn dự kiến dành cho kiểm thử."
+    ]
+   }
+  },
+  {
+   "id": "q025",
+   "type": "single",
+   "question": "Which of the following quality of SRS document ensures to compare the results of a phase with another phase ?",
+   "options": [
+    "Structured",
+    "Verifiable",
+    "Traceable",
+    "Concise"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Theo đề, Verifiable là thuộc tính cho phép kiểm chứng được yêu cầu. Tuy nhiên việc liên kết, đối chiếu kết quả giữa các phase (requirement - design - code - test) thực chất là Traceable.",
+   "note": "⚠ Đề khoanh Verifiable, người đánh dấu cũng gạch chân Traceable như phương án thay thế; Traceable hợp lý hơn vì traceability chính là khả năng truy vết/đối chiếu một yêu cầu qua các phase khác nhau.",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Đặc tính nào sau đây của tài liệu SRS đảm bảo có thể so sánh kết quả của một giai đoạn với giai đoạn khác?",
+    "options": [
+     "Có cấu trúc",
+     "Có thể kiểm chứng",
+     "Có thể truy vết",
+     "Ngắn gọn"
+    ]
+   }
+  },
+  {
+   "id": "q085",
+   "type": "single",
+   "question": "The goal of reading SRS document by the software developer is to",
+   "options": [
+    "Ensure requirements are understandable from a functionality point of view",
+    "Understand the features of the product",
+    "Ensure that the software is developed as per customer needs",
+    "None of these"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Developer đọc SRS để hiểu các tính năng của sản phẩm cần xây dựng; việc đảm bảo yêu cầu dễ hiểu hay đúng nhu cầu khách hàng là mục tiêu của các vai trò khác (BA, khách hàng, tester).",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": false,
+   "vi": {
+    "question": "Mục tiêu của việc developer đọc tài liệu SRS là để",
+    "options": [
+     "Đảm bảo các yêu cầu dễ hiểu xét từ góc độ chức năng",
+     "Hiểu các tính năng của sản phẩm",
+     "Đảm bảo phần mềm được phát triển theo nhu cầu của khách hàng",
+     "Không có đáp án nào"
+    ]
+   }
+  },
+  {
+   "id": "q086",
+   "type": "single",
+   "question": "Which of the following is an example of validation?",
+   "options": [
+    "Software recognizes incorrect inputs",
+    "Use of the software provides the correct results as documented",
+    "Software is well-received by the user",
+    "Ensuring the system locks out an account after three failed log-in attempts"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Theo đề, validation là kiểm tra phần mềm khi sử dụng thực tế cho ra kết quả đúng như tài liệu mô tả, tức là đáp ứng đúng mục đích sử dụng.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Ví dụ nào sau đây là thẩm định (validation)?",
+    "options": [
+     "Phần mềm nhận diện được đầu vào sai",
+     "Việc sử dụng phần mềm cho ra kết quả đúng như tài liệu mô tả",
+     "Phần mềm được người dùng đón nhận tốt",
+     "Đảm bảo hệ thống khóa tài khoản sau ba lần đăng nhập thất bại"
+    ]
+   }
+  },
+  {
+   "id": "q087",
+   "type": "single",
+   "question": "What statement is INCORRECT about memory leaks?",
+   "options": [
+    "An unused object is never released back to the free store​",
+    "An object is stored in memory but cannot be accessed by the running code",
+    "Memory leak does not effect to performance of computer",
+    "None of the above"
+   ],
+   "answer": [
+    2
+   ],
+   "explanation": "Memory leak làm bộ nhớ khả dụng giảm dần, gây chậm hệ thống, swap nhiều hoặc crash, nên câu 'không ảnh hưởng performance' là sai.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": false,
+   "vi": {
+    "question": "Phát biểu nào SAI về rò rỉ bộ nhớ (memory leak)?",
+    "options": [
+     "Một đối tượng không còn sử dụng nhưng không bao giờ được giải phóng trả lại vùng nhớ trống (free store)",
+     "Một đối tượng được lưu trong bộ nhớ nhưng code đang chạy không thể truy cập được",
+     "Memory leak không ảnh hưởng đến hiệu năng (performance) của máy tính",
+     "Không có đáp án nào ở trên"
+    ]
+   }
+  },
+  {
+   "id": "q088",
+   "type": "single",
+   "question": "Optimization Techniques are generally studied as a part of",
+   "options": [
+    "Physics",
+    "Probability",
+    "Statistics",
+    "Operation Research"
+   ],
+   "answer": [
+    3
+   ],
+   "explanation": "Optimization Techniques (linear programming, queuing, scheduling...) là nội dung cốt lõi của Operation Research, ngành dùng mô hình toán học để ra quyết định tối ưu.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Các kỹ thuật tối ưu hóa (Optimization Techniques) thường được nghiên cứu như một phần của",
+    "options": [
+     "Vật lý",
+     "Xác suất",
+     "Thống kê",
+     "Vận trù học"
+    ]
+   }
+  },
+  {
+   "id": "q035",
+   "type": "single",
+   "question": "Does logging better than debugger?",
+   "options": [
+    "Yes, because setup logging is faster",
+    "Use whaterver available to you. Sometime ones is bet suited for a certain type of bug than other. You need to THINK",
+    "No, because setup debugger is faster",
+    "Why don't we use both???"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Logging và debugger mỗi công cụ phù hợp với từng loại bug khác nhau, nên cần suy nghĩ và chọn công cụ phù hợp với tình huống.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": false,
+   "vi": {
+    "question": "Ghi log (logging) có tốt hơn Debugger không?",
+    "options": [
+     "Có, vì thiết lập logging nhanh hơn",
+     "Dùng bất cứ thứ gì bạn có. Đôi khi cái này phù hợp hơn cái kia với một loại bug nhất định. Bạn cần phải SUY NGHĨ",
+     "Không, vì thiết lập Debugger nhanh hơn",
+     "Sao không dùng cả hai???"
+    ]
+   }
+  },
+  {
+   "id": "q089",
+   "type": "single",
+   "question": "In gdb, how to run until the current function is finished?",
+   "options": [
+    "b fn",
+    "r",
+    "f",
+    "s"
+   ],
+   "answer": [
+    2
+   ],
+   "explanation": "Theo đề, lệnh được chọn là f; ý của câu hỏi là chạy tiếp đến khi hàm hiện tại kết thúc và quay về hàm gọi.",
+   "note": "⚠ Đề khoanh f, nhưng trong gdb lệnh chạy đến hết hàm hiện tại là finish (viết tắt fin); còn f là viết tắt của frame. Trong các lựa chọn không có đáp án hoàn toàn đúng, f chỉ là gần nhất theo ý người ra đề.",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Trong gdb, làm thế nào để chạy cho đến khi hàm hiện tại kết thúc?",
+    "options": [
+     "b fn",
+     "r",
+     "f",
+     "s"
+    ]
+   }
+  },
+  {
+   "id": "q090",
+   "type": "single",
+   "question": "In gdb, how to display break points information?",
+   "options": [
+    "bt",
+    "r",
+    "c",
+    "info break"
+   ],
+   "answer": [
+    3
+   ],
+   "explanation": "Trong gdb, lệnh info break (info breakpoints) liệt kê các breakpoint; bt là backtrace, r là run, c là continue.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Trong gdb, làm sao để hiển thị thông tin các breakpoint?",
+    "options": [
+     "bt",
+     "r",
+     "c",
+     "info break"
+    ]
+   }
+  },
+  {
+   "id": "q091",
+   "type": "single",
+   "question": "When is the debugger is the idea tool?",
+   "options": [
+    "UI displayed wrong",
+    "A variable value is unexpectedly changed",
+    "Find memory leak",
+    "We need to optimize a function by speed"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Debugger với watchpoint/breakpoint giúp dừng đúng lúc biến bị thay đổi và xem backtrace. Memory leak hay tối ưu tốc độ nên dùng memory profiler/profiler.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Khi nào Debugger là công cụ lý tưởng?",
+    "options": [
+     "Giao diện (UI) hiển thị sai",
+     "Giá trị của một biến bị thay đổi bất thường",
+     "Tìm memory leak",
+     "Cần tối ưu tốc độ của một hàm"
+    ]
+   }
+  },
+  {
+   "id": "q092",
+   "type": "single",
+   "question": "What is one of the advantages of boundary value testing in unit testing?",
+   "options": [
+    "Tests the entire application",
+    "Tests values at the boundaries of valid ranges",
+    "Simplifies test case writing",
+    "Requires no test case writing for boundary values"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Boundary value testing tập trung kiểm tra các giá trị tại biên của miền hợp lệ (min, max, min-1, max+1), nơi lỗi off-by-one thường xảy ra.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Một trong những ưu điểm của kiểm thử giá trị biên (boundary value testing) trong Unit test là gì?",
+    "options": [
+     "Kiểm thử toàn bộ ứng dụng",
+     "Kiểm thử các giá trị tại biên của khoảng hợp lệ",
+     "Đơn giản hóa việc viết test case",
+     "Không cần viết test case cho các giá trị biên"
+    ]
+   }
+  },
+  {
+   "id": "q093",
+   "type": "single",
+   "question": "What does the \"Arrange, Act, Assert\" pattern in unit testing refer to?",
+   "options": [
+    "The order of test case execution",
+    "The structure of a test case function",
+    "The order of setting up test data, performing an action, and checking the result",
+    "The use of macros in Gtest"
+   ],
+   "answer": [
+    2
+   ],
+   "explanation": "Arrange-Act-Assert là cách tổ chức một test case: Arrange chuẩn bị dữ liệu/đối tượng, Act thực hiện hành động cần test, Assert kiểm tra kết quả.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Mẫu \"Arrange, Act, Assert\" trong Unit test đề cập đến điều gì?",
+    "options": [
+     "Thứ tự thực thi các test case",
+     "Cấu trúc của một hàm test case",
+     "Thứ tự chuẩn bị dữ liệu test, thực hiện hành động và kiểm tra kết quả",
+     "Việc sử dụng macro trong Gtest"
+    ]
+   }
+  },
+  {
+   "id": "q094",
+   "type": "single",
+   "question": "What is White box test?",
+   "options": [
+    "A software testing method in which the functionalities of software applications are tested without having knowledge of internal code structure, implementation details and internal paths.",
+    "A testing technique in which software’s internal structure, design, and coding are tested to verify input-output flow and improve design, usability, and security.",
+    "Both",
+    "None"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "White box testing test dựa trên cấu trúc bên trong, thiết kế và code; mô tả \"không cần biết cấu trúc code\" là Black box.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": false,
+   "vi": {
+    "question": "Kiểm thử hộp trắng (White box test) là gì?",
+    "options": [
+     "Một phương pháp kiểm thử phần mềm trong đó các chức năng của ứng dụng được kiểm thử mà không cần biết cấu trúc code bên trong, chi tiết cài đặt và các luồng xử lý nội bộ.",
+     "Một kỹ thuật kiểm thử trong đó cấu trúc bên trong, thiết kế và code của phần mềm được kiểm thử để xác minh luồng đầu vào - đầu ra và cải thiện thiết kế, khả năng sử dụng (usability) và bảo mật.",
+     "Cả hai",
+     "Không có"
+    ]
+   }
+  },
+  {
+   "id": "q095",
+   "type": "single",
+   "question": "What is a code coverage metric used in unit testing?",
+   "options": [
+    "A measure of the number of lines of code in a program",
+    "A measure of the number of test cases executed",
+    "A measure of how thoroughly the code is tested by the unit tests",
+    "A measure of the code's performance"
+   ],
+   "answer": [
+    2
+   ],
+   "explanation": "Code coverage đo mức độ code được unit test thực thi (line, branch...), tức là code được test kỹ đến đâu.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Chỉ số độ bao phủ mã (code coverage metric) dùng trong Unit test là gì?",
+    "options": [
+     "Thước đo số dòng code trong chương trình",
+     "Thước đo số test case đã thực thi",
+     "Thước đo mức độ code được kiểm thử kỹ lưỡng bởi các Unit test",
+     "Thước đo hiệu năng (performance) của code"
+    ]
+   }
+  },
+  {
+   "id": "q040",
+   "type": "single",
+   "question": "In unit testing, what is the primary goal of a test case?",
+   "options": [
+    "Test all possible scenarios",
+    "Test a specific aspect of a function or class",
+    "Test the entire application",
+    "Test the user interface"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Một unit test case nên tập trung kiểm tra một khía cạnh cụ thể của một function/class để khi fail thì xác định được ngay nguyên nhân.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Trong Unit test, mục tiêu chính của một test case là gì?",
+    "options": [
+     "Kiểm thử mọi kịch bản có thể",
+     "Kiểm thử một khía cạnh cụ thể của một hàm hoặc class",
+     "Kiểm thử toàn bộ ứng dụng",
+     "Kiểm thử giao diện người dùng (UI)"
+    ]
+   }
+  },
+  {
+   "id": "q096",
+   "type": "single",
+   "question": "In data flow diagramming. What is the \"Customer\" an example of in the following scenario?",
+   "options": [
+    "A data flow",
+    "An external entity",
+    "A data store",
+    "A process"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Trong DFD, Customer là đối tượng nằm ngoài hệ thống, gửi/nhận dữ liệu với hệ thống nên là external entity; không phải process, data store hay data flow.",
+   "note": "Câu gốc có hình minh họa nhưng PDF không kèm hình. (câu hỏi nhắc tới 'following scenario' nhưng không có nội dung kịch bản)",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Trong sơ đồ luồng dữ liệu (Data Flow Diagram), \"Customer\" trong kịch bản sau là ví dụ của gì?",
+    "options": [
+     "Một luồng dữ liệu (data flow)",
+     "Một thực thể bên ngoài (external entity)",
+     "Một kho dữ liệu (data store)",
+     "Một tiến trình (process)"
+    ]
+   }
+  },
+  {
+   "id": "q097",
+   "type": "single",
+   "question": "In Data Flow Diagramming, what does an external entity represent?",
+   "options": [
+    "A system process",
+    "An actor that interacts with the system",
+    "A data transformation operation",
+    "A decision point in the process"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Trong DFD, external entity (terminator) là tác nhân bên ngoài hệ thống (người dùng, hệ thống khác) gửi hoặc nhận dữ liệu từ hệ thống.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Trong sơ đồ luồng dữ liệu (Data Flow Diagram), thực thể bên ngoài (external entity) biểu diễn điều gì?",
+    "options": [
+     "Một tiến trình của hệ thống",
+     "Một tác nhân (actor) tương tác với hệ thống",
+     "Một thao tác biến đổi dữ liệu",
+     "Một điểm quyết định trong tiến trình"
+    ]
+   }
+  },
+  {
+   "id": "q098",
+   "type": "single",
+   "question": "It's used to implement an associative array, a structure that can map keys to values",
+   "options": [
+    "Linked list",
+    "Hashing",
+    "Array",
+    "Sorting"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Hashing (hash table) dùng hash function ánh xạ key tới vị trí lưu value, là cách cài đặt phổ biến của associative array.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Nó được dùng để cài đặt mảng kết hợp (associative array), một cấu trúc có thể ánh xạ khóa (key) tới giá trị (value)",
+    "options": [
+     "Linked list",
+     "Băm",
+     "Array",
+     "Sắp xếp"
+    ]
+   }
+  },
+  {
+   "id": "q099",
+   "type": "single",
+   "question": "What method do we use to find an element in the Map with the key?",
+   "options": [
+    "begin()",
+    "end()",
+    "find(k)",
+    "put(k, v)"
+   ],
+   "answer": [
+    2
+   ],
+   "explanation": "find(k) tìm phần tử theo key và trả về iterator tới phần tử đó (hoặc end() nếu không có). put(k, v) dùng để thêm phần tử.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Phương thức nào dùng để tìm một phần tử trong Map theo key?",
+    "options": [
+     "begin()",
+     "end()",
+     "find(k)",
+     "put(k, v)"
+    ]
+   }
+  },
+  {
+   "id": "q100",
+   "type": "single",
+   "question": "What type linked list is represented in the above image?",
+   "options": [
+    "circular singly linked list",
+    "singly linked list",
+    "doubly linked list",
+    "circular doubly linked list"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Theo đáp án đề, hình là singly linked list: mỗi node chỉ có một pointer next trỏ tới node kế tiếp và node cuối trỏ NULL (không vòng lại, không có pointer prev).",
+   "note": "Câu gốc có hình minh họa nhưng PDF không kèm hình.",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Hình trên biểu diễn loại linked list nào?",
+    "options": [
+     "Danh sách liên kết đơn vòng",
+     "Danh sách liên kết đơn",
+     "Danh sách liên kết đôi",
+     "Danh sách liên kết đôi vòng"
+    ]
+   }
+  },
+  {
+   "id": "q101",
+   "type": "single",
+   "question": "Which of these algorithms sorts items by first splitting the list of items down into smaller and smaller groups?",
+   "options": [
+    "Bubble sort",
+    "Linear searh",
+    "Binary search",
+    "Merge sort"
+   ],
+   "answer": [
+    3
+   ],
+   "explanation": "Merge sort theo chiến lược divide and conquer: chia danh sách thành các nhóm nhỏ dần đến khi còn 1 phần tử rồi trộn (merge) lại theo thứ tự. Linear search và Binary search là thuật toán tìm kiếm, không phải sắp xếp.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Thuật toán nào sau đây sắp xếp các phần tử bằng cách đầu tiên chia danh sách thành các nhóm ngày càng nhỏ hơn?",
+    "options": [
+     "Bubble sort",
+     "Tìm kiếm tuyến tính (Linear search)",
+     "Tìm kiếm nhị phân",
+     "Merge sort"
+    ]
+   }
+  },
+  {
+   "id": "q102",
+   "type": "single",
+   "question": "In linked list each node contains a minimum of two fileds. One field is data field to store the data second field is?",
+   "options": [
+    "Pointer to character",
+    "Pointer to integer",
+    "Pointer to node",
+    "Node"
+   ],
+   "answer": [
+    2
+   ],
+   "explanation": "Mỗi node trong linked list gồm data field và một con trỏ trỏ tới node kế tiếp (pointer to node).",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Trong Linked list, mỗi node chứa tối thiểu hai trường. Một trường là trường dữ liệu (data) để lưu dữ liệu, trường thứ hai là?",
+    "options": [
+     "Con trỏ tới ký tự",
+     "Con trỏ tới số nguyên",
+     "Con trỏ tới node",
+     "Node"
+    ]
+   }
+  },
+  {
+   "id": "q103",
+   "type": "single",
+   "question": "What is a vertex in a Graph?",
+   "options": [
+    "The edge the connects two nodes",
+    "A node or a point in the graph",
+    "The path between two vertices",
+    "The length of the edge"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Vertex là một node (đỉnh) trong graph; edge là cạnh nối giữa hai vertex.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Đỉnh (vertex) trong Graph là gì?",
+    "options": [
+     "Cạnh (edge) nối hai node",
+     "Một node hoặc một điểm trong đồ thị (graph)",
+     "Đường đi (path) giữa hai đỉnh",
+     "Độ dài của cạnh (edge)"
+    ]
+   }
+  },
+  {
+   "id": "q104",
+   "type": "single",
+   "question": "In a hash table of size 10, where is element 7 placed?",
+   "options": [
+    "6",
+    "7",
+    "17",
+    "16"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Với hash function phổ biến h(k) = k mod 10, ta có 7 mod 10 = 7 nên phần tử 7 được đặt ở vị trí index 7.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Trong một bảng băm (hash table) kích thước 10, phần tử 7 được đặt ở đâu?",
+    "options": [
+     "6",
+     "7",
+     "17",
+     "16"
+    ]
+   }
+  },
+  {
+   "id": "q105",
+   "type": "single",
+   "question": "What is a hash table?",
+   "options": [
+    "A structure that maps value to keys",
+    "A structure that maps keys to values",
+    "A structure used for storage",
+    "A structure used to implement stack ang queue"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Hash table là cấu trúc ánh xạ key sang value, dùng hash function để tính vị trí lưu value từ key, cho phép truy xuất trung bình O(1).",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Bảng băm (hash table) là gì?",
+    "options": [
+     "Một cấu trúc ánh xạ giá trị tới khóa",
+     "Một cấu trúc ánh xạ khóa tới giá trị",
+     "Một cấu trúc dùng để lưu trữ",
+     "Một cấu trúc dùng để cài đặt Stack và Queue"
+    ]
+   }
+  },
+  {
+   "id": "q106",
+   "type": "single",
+   "question": "Within sequence diagrams…",
+   "options": [
+    "you can refer to other sequence diagrams",
+    "time is no separate dimension",
+    "the chronological process of one object is modeled",
+    "the behavior of one object is modeled"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Sequence diagram có thể tham chiếu tới sequence diagram khác qua interaction use (fragment ref); thời gian là một chiều riêng (trục dọc) và diagram mô hình hóa tương tác giữa nhiều object.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Trong sơ đồ tuần tự (sequence diagram)…",
+    "options": [
+     "có thể tham chiếu tới các sequence diagram khác",
+     "thời gian không phải là một chiều riêng biệt",
+     "mô hình hóa tiến trình theo thời gian của một đối tượng",
+     "mô hình hóa hành vi của một đối tượng"
+    ]
+   }
+  },
+  {
+   "id": "q107",
+   "type": "single",
+   "question": "LLD focuses on which aspects of the software development process?",
+   "options": [
+    "Detailed design of system components",
+    "Implementation of specific system components",
+    "Generating specific source code",
+    "Testing and running system experiments"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "LLD (Low-Level Design) tập trung vào thiết kế chi tiết từng component: class, method, data structure, logic.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "LLD tập trung vào những khía cạnh nào của quy trình phát triển phần mềm?",
+    "options": [
+     "Thiết kế chi tiết các thành phần (component) của hệ thống",
+     "Hiện thực (implementation) các thành phần cụ thể của hệ thống",
+     "Sinh mã nguồn (source code) cụ thể",
+     "Kiểm thử và chạy thử nghiệm hệ thống"
+    ]
+   }
+  },
+  {
+   "id": "q108",
+   "type": "single",
+   "question": "At which stage in the software development process is HLD performed?",
+   "options": [
+    "Requirement analysis",
+    "Detailed design",
+    "Source code implementation",
+    "Testing and deployment"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "HLD được thực hiện ở giai đoạn thiết kế (design), sau Requirement analysis và trước khi code; trong các lựa chọn, 'Detailed design' là phương án gần với giai đoạn design nhất.",
+   "note": "⚠ Đề khoanh 'Detailed design', nhưng nói chặt thì Detailed design là LLD; HLD thuộc giai đoạn system/architectural design ngay sau Requirement analysis. Vẫn giữ đáp án đề vì không có phương án 'Design' chung.",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "HLD được thực hiện ở giai đoạn nào trong quy trình phát triển phần mềm?",
+    "options": [
+     "Phân tích yêu cầu",
+     "Thiết kế chi tiết",
+     "Triển khai mã nguồn",
+     "Kiểm thử và triển khai"
+    ]
+   }
+  },
+  {
+   "id": "q109",
+   "type": "single",
+   "question": "Which SOLID design principle is most closely described by the given statement:\"classes should depend on abstractions rather than implementations.\"",
+   "options": [
+    "Single Responsibility Principle",
+    "Open/Closed Principle.",
+    "Liskov Substitution Principle.",
+    "Dependency Inversion Principle"
+   ],
+   "answer": [
+    3
+   ],
+   "explanation": "Dependency Inversion Principle yêu cầu module/class phụ thuộc vào abstraction (interface) chứ không phụ thuộc vào implementation cụ thể.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Nguyên lý thiết kế SOLID nào được mô tả sát nhất bởi phát biểu: \"các lớp nên phụ thuộc vào trừu tượng (abstraction) thay vì vào cài đặt cụ thể (implementation).\"",
+    "options": [
+     "Nguyên lý đơn trách nhiệm",
+     "Nguyên lý đóng/mở (Open/Closed Principle).",
+     "Nguyên lý thay thế Liskov (Liskov Substitution Principle).",
+     "Nguyên lý đảo ngược phụ thuộc"
+    ]
+   }
+  },
+  {
+   "id": "q110",
+   "type": "single",
+   "question": "Which feature can be implemented using encapsulation?",
+   "options": [
+    "Polymorphism",
+    "Overloading",
+    "Inheritance",
+    "Abstraction"
+   ],
+   "answer": [
+    3
+   ],
+   "explanation": "Encapsulation che giấu chi tiết bên trong và chỉ lộ ra interface, nhờ đó hiện thực được Abstraction.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Tính năng nào có thể được cài đặt bằng tính đóng gói (encapsulation)?",
+    "options": [
+     "Đa hình",
+     "Nạp chồng",
+     "Kế thừa",
+     "Trừu tượng hóa"
+    ]
+   }
+  },
+  {
+   "id": "q111",
+   "type": "single",
+   "question": "Which design method focuses on dividing a system into smaller components and determining how they interact with each other?",
+   "options": [
+    "Object-Oriented Design (OOD)",
+    "Structured Design",
+    "Model-Driven Design (MDD)",
+    "Component-Based Design (CBD)"
+   ],
+   "answer": [
+    3
+   ],
+   "explanation": "Component-Based Design chia hệ thống thành các component độc lập, tái sử dụng được và định nghĩa interface để chúng tương tác.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Phương pháp thiết kế nào tập trung vào việc chia hệ thống thành các thành phần nhỏ hơn và xác định cách chúng tương tác với nhau?",
+    "options": [
+     "Thiết kế hướng đối tượng",
+     "Thiết kế có cấu trúc",
+     "Thiết kế hướng mô hình",
+     "Thiết kế dựa trên thành phần"
+    ]
+   }
+  },
+  {
+   "id": "q112",
+   "type": "single",
+   "question": "The Structured Design method often uses which tools to represent the structure and flow of data in a system?",
+   "options": [
+    "Flowchart, pseudocode, and data flow diagram",
+    "Class diagram, sequence diagram, and state diagram",
+    "Use case diagram, activity diagram, and component diagram",
+    "ER diagram, deployment diagram, and collaboration diagram"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "Structured Design là phương pháp hướng chức năng/quy trình, thường dùng flowchart, pseudocode và data flow diagram; các loại class/sequence/use case diagram thuộc UML của object-oriented design.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Phương pháp thiết kế có cấu trúc (Structured Design) thường dùng công cụ nào để biểu diễn cấu trúc và luồng dữ liệu trong hệ thống?",
+    "options": [
+     "Flowchart, pseudocode và sơ đồ luồng dữ liệu (data flow diagram)",
+     "Class diagram, sequence diagram và state diagram",
+     "Use case diagram, activity diagram và component diagram",
+     "ER diagram, deployment diagram và collaboration diagram"
+    ]
+   }
+  },
+  {
+   "id": "q113",
+   "type": "single",
+   "question": "What design pattern allows an object to alter its behavior when its internal state changes?",
+   "options": [
+    "State",
+    "Proxy",
+    "Adapter",
+    "Singleton"
+   ],
+   "answer": [
+    0
+   ],
+   "explanation": "State pattern cho phép object thay đổi hành vi khi trạng thái nội bộ thay đổi, mỗi trạng thái được đóng gói thành một class riêng.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Design pattern nào cho phép một đối tượng thay đổi hành vi khi trạng thái bên trong của nó thay đổi?",
+    "options": [
+     "State",
+     "Proxy",
+     "Adapter",
+     "Singleton"
+    ]
+   }
+  },
+  {
+   "id": "q114",
+   "type": "single",
+   "question": "In the Visitor design pattern, what is the primary purpose of the Visitor class?",
+   "options": [
+    "To represent the element being visited.",
+    "To define the interface for visiting elements.",
+    "To store the state of an object for future restoration.",
+    "To encapsulate an algorithm in an object."
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Visitor khai báo interface với các phương thức visit cho từng loại element, cho phép thêm thao tác mới mà không sửa các class element.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Trong design pattern Visitor, mục đích chính của class Visitor là gì?",
+    "options": [
+     "Đại diện cho phần tử (element) được ghé thăm.",
+     "Định nghĩa interface để ghé thăm (visit) các phần tử.",
+     "Lưu trạng thái của đối tượng để khôi phục sau này.",
+     "Đóng gói một thuật toán vào một đối tượng."
+    ]
+   }
+  },
+  {
+   "id": "q060",
+   "type": "single",
+   "question": "Which of the following pattern works as a bridge between two incompatible interfaces?",
+   "options": [
+    "Builder Pattern",
+    "Adapter Pattern",
+    "Prototype Pattern",
+    "Filter Pattern"
+   ],
+   "answer": [
+    1
+   ],
+   "explanation": "Adapter Pattern chuyển interface của một class thành interface mà client mong đợi, đóng vai trò cầu nối giữa hai interface không tương thích.",
+   "note": "",
+   "answer_source": "pdf",
+   "shuffle_options": true,
+   "vi": {
+    "question": "Pattern nào sau đây hoạt động như cầu nối giữa hai interface không tương thích?",
+    "options": [
+     "Builder Pattern",
+     "Adapter Pattern",
+     "Prototype Pattern",
+     "Filter Pattern"
+    ]
+   }
+  }
+ ]
+}
