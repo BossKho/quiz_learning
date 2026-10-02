@@ -1,4 +1,5 @@
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
+import { getSqlWasmBinary } from './sql-wasm-binary';
 import type { 
   Deck, 
   Question, 
@@ -77,8 +78,9 @@ class DatabaseManager {
   }
 
   private async _doInit(): Promise<void> {
+    const wasmBinary = getSqlWasmBinary().buffer as ArrayBuffer;
     this.SQL = await initSqlJs({
-      locateFile: (file) => `/${file}`,
+      wasmBinary,
     });
 
     const savedBinary = await loadDbFromIDB();

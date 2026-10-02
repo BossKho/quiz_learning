@@ -51,15 +51,19 @@ export function App() {
     }
   }, []);
 
+  const [initError, setInitError] = useState<string | null>(null);
+
   // Initialize DB on boot
   useEffect(() => {
     async function setup() {
       try {
+        setInitError(null);
         await dbService.init();
         await reloadData();
         setIsDbReady(true);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Database initialization failed:', err);
+        setInitError(err?.message || String(err));
       }
     }
     setup();
@@ -137,6 +141,26 @@ export function App() {
   };
 
   if (!isDbReady) {
+    if (initError) {
+      return (
+        <div className="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background text-foreground p-6 text-center">
+          <div className="rounded-full bg-destructive/10 p-3 text-destructive">
+            <Loader2 className="size-6 animate-pulse" />
+          </div>
+          <div className="text-base font-semibold text-destructive">Database Initialization Failed</div>
+          <p className="max-w-md text-xs text-muted-foreground font-mono bg-muted/50 p-3 rounded-lg border border-border">
+            {initError}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Retry Launch
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center gap-3 bg-background text-foreground">
         <Loader2 className="size-6 animate-spin text-primary" />
