@@ -2,7 +2,7 @@ import { dbService } from '@/services/db';
 import { syncCloudImmediate } from '@/services/firebaseService';
 import { isTauri, invoke } from '@tauri-apps/api/core';
 
-export const CURRENT_APP_VERSION = '1.2.0';
+export const CURRENT_APP_VERSION = '1.2.1';
 export const GITHUB_REPO_OWNER = 'BossKho';
 export const GITHUB_REPO_NAME = 'quiz_learning';
 
@@ -38,6 +38,7 @@ function formatFileSize(bytes: number): string {
  * Extracts semantic version parts [major, minor, patch] from strings like:
  * "v1.0.1" -> [1, 0, 1]
  * "Ver 1.1" -> [1, 1, 0]
+ * "Ver 1.21" -> [1, 2, 1]
  * "version1" -> [1, 0, 0]
  * "1.2.3" -> [1, 2, 3]
  */
@@ -47,7 +48,16 @@ export function parseVersion(versionStr: string): number[] {
   const match = versionStr.match(/\d+(\.\d+)*/);
   if (!match) return [0, 0, 0];
 
-  const parts = match[0].split('.').map((p) => parseInt(p, 10) || 0);
+  const rawParts = match[0].split('.');
+  // Handle 2-part notation where second part has 2 digits like '1.21' -> [1, 2, 1]
+  if (rawParts.length === 2 && rawParts[1].length === 2) {
+    const maj = parseInt(rawParts[0], 10) || 0;
+    const min = parseInt(rawParts[1][0], 10) || 0;
+    const pat = parseInt(rawParts[1][1], 10) || 0;
+    return [maj, min, pat];
+  }
+
+  const parts = rawParts.map((p) => parseInt(p, 10) || 0);
   while (parts.length < 3) {
     parts.push(0);
   }

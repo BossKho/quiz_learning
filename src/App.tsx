@@ -192,12 +192,16 @@ export function App() {
   const handleCheckForUpdates = useCallback(async (manual = true) => {
     if (isCheckingUpdate) return;
     setIsCheckingUpdate(true);
+    let loadingToastId: string | undefined;
     if (manual) {
-      toast.info('Đang kiểm tra bản cập nhật từ máy chủ...');
+      loadingToastId = toast.info('Đang kiểm tra bản cập nhật từ máy chủ...');
     }
     try {
       const info = await checkForAppUpdates();
       setUpdateInfo(info);
+      if (loadingToastId) {
+        toast.dismiss(loadingToastId);
+      }
       if (info.hasUpdate) {
         setUpdateModalOpen(true);
       } else if (manual) {
@@ -205,6 +209,9 @@ export function App() {
       }
     } catch (err) {
       console.error('Failed to check for updates:', err);
+      if (loadingToastId) {
+        toast.dismiss(loadingToastId);
+      }
       if (manual) {
         toast.error('Không thể kiểm tra bản cập nhật lúc này. Vui lòng thử lại sau.');
       }

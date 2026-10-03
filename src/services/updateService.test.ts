@@ -12,6 +12,8 @@ describe('updateService', () => {
     it('handles short versions and names', () => {
       expect(parseVersion('1.1')).toEqual([1, 1, 0]);
       expect(parseVersion('Ver 1.1')).toEqual([1, 1, 0]);
+      expect(parseVersion('Ver 1.21')).toEqual([1, 2, 1]);
+      expect(parseVersion('1.21')).toEqual([1, 2, 1]);
       expect(parseVersion('version1')).toEqual([1, 0, 0]);
       expect(parseVersion('')).toEqual([0, 0, 0]);
     });
@@ -19,19 +21,21 @@ describe('updateService', () => {
 
   describe('compareVersions', () => {
     it('returns 1 when remote is newer', () => {
+      expect(compareVersions('Ver 1.21', '1.2.0')).toBe(1);
       expect(compareVersions('1.2.1', '1.2.0')).toBe(1);
-      expect(compareVersions('1.3.0', '1.2.0')).toBe(1);
+      expect(compareVersions('1.3.0', '1.2.1')).toBe(1);
       expect(compareVersions('2.0.0', '1.9.9')).toBe(1);
     });
 
     it('returns -1 when remote is older', () => {
-      expect(compareVersions('1.1.9', '1.2.0')).toBe(-1);
-      expect(compareVersions('1.0.0', '1.2.0')).toBe(-1);
+      expect(compareVersions('1.1.9', '1.2.1')).toBe(-1);
+      expect(compareVersions('1.2.0', '1.2.1')).toBe(-1);
+      expect(compareVersions('1.0.0', '1.2.1')).toBe(-1);
     });
 
     it('returns 0 when versions are equal', () => {
-      expect(compareVersions('1.2.0', '1.2.0')).toBe(0);
-      expect(compareVersions('v1.2', '1.2.0')).toBe(0);
+      expect(compareVersions('1.2.1', '1.2.1')).toBe(0);
+      expect(compareVersions('Ver 1.21', '1.2.1')).toBe(0);
     });
   });
 
@@ -66,10 +70,10 @@ describe('updateService', () => {
 
     it('returns hasUpdate false when on latest version', async () => {
       const mockRelease = {
-        tag_name: 'v1.2.0',
-        name: 'Ver 1.2.0',
+        tag_name: 'v1.2.1',
+        name: 'Ver 1.21',
         published_at: '2026-10-04T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.2.0',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.2.1',
         body: 'Initial release',
         assets: [],
       };
@@ -85,4 +89,3 @@ describe('updateService', () => {
     });
   });
 });
-
