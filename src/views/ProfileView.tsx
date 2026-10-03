@@ -42,6 +42,7 @@ interface ProfileViewProps {
   onBackToDashboard: () => void;
   onStartWeakPractice?: () => void;
   onReloadData?: () => Promise<void>;
+  onCheckUpdates?: () => void;
 }
 
 // 16 Modern Curated Avatars for Learners
@@ -68,6 +69,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onBackToDashboard,
   onStartWeakPractice,
   onReloadData,
+  onCheckUpdates,
 }) => {
   const [user, setUser] = useState<User | null>(getCurrentUser());
   const [profile, setProfile] = useState<UserProfileData | null>(null);
@@ -692,6 +694,26 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 )}
               </Button>
             </form>
+          </div>
+
+          {/* App Version & Update Section */}
+          <div className="pt-3 border-t border-border space-y-2.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-foreground">Phiên bản ứng dụng:</span>
+              <span className="font-mono font-bold text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-lg border border-border">v1.0.0</span>
+            </div>
+            {onCheckUpdates && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onCheckUpdates}
+                className="w-full rounded-xl text-xs font-bold gap-1.5 cursor-pointer hover:bg-muted"
+              >
+                <Sparkles className="size-3.5 text-amber-500" />
+                <span>Kiểm tra bản cập nhật</span>
+              </Button>
+            )}
           </div>
 
           {/* Sign Out Action */}

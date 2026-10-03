@@ -25,6 +25,8 @@ import { subscribeToAuthState, syncLocalToCloud, pullCloudToLocal, syncCloudImme
 import { AuthModal } from '@/components/AuthModal';
 import { ProfileView } from '@/views/ProfileView';
 import { LandingPage } from '@/views/LandingPage';
+import { checkForAppUpdates, type UpdateInfo } from '@/services/updateService';
+import { UpdateModal } from '@/components/UpdateModal';
 
 export function App() {
   // If running inside secondary native popup window, render BusyPopupWindow directly
@@ -65,6 +67,11 @@ export function App() {
   const [syncModalOpen, setSyncModalOpen] = useState(false);
   const [busyModalOpen, setBusyModalOpen] = useState(false);
   const [busyState, setBusyState] = useState<BusyModeState>(busyModeService.getSnapshot());
+
+  // App Update States
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
   // Load data from SQLite
   const reloadData = useCallback(async () => {
@@ -180,6 +187,40 @@ export function App() {
     }
     setup();
   }, [reloadData]);
+
+  // Check for app updates (both automated on boot and manual)
+  const handleCheckForUpdates = useCallback(async (manual = true) => {
+    if (isCheckingUpdate) return;
+    setIsCheckingUpdate(true);
+    if (manual) {
+      toast.info('Đang kiểm tra bản cập nhật từ máy chủ...');
+    }
+    try {
+      const info = await checkForAppUpdates();
+      setUpdateInfo(info);
+      if (info.hasUpdate) {
+        setUpdateModalOpen(true);
+      } else if (manual) {
+        toast.success(`Bạn đang sử dụng phiên bản mới nhất (v${info.currentVersion})!`);
+      }
+    } catch (err) {
+      console.error('Failed to check for updates:', err);
+      if (manual) {
+        toast.error('Không thể kiểm tra bản cập nhật lúc này. Vui lòng thử lại sau.');
+      }
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  }, [isCheckingUpdate]);
+
+  // Background check for updates 3 seconds after boot
+  useEffect(() => {
+    if (!isDbReady) return;
+    const timer = setTimeout(() => {
+      handleCheckForUpdates(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [isDbReady, handleCheckForUpdates]);
 
   // Global hotkeys (Ctrl+K, Shortcuts ?)
   useEffect(() => {
@@ -425,6 +466,8 @@ export function App() {
           onOpenAuthModal={() => setAuthModalOpen(true)}
           onQuickSync={handleQuickSync}
           isSyncingCloud={isSyncingCloud}
+          onCheckUpdates={() => handleCheckForUpdates(true)}
+          hasPendingUpdate={Boolean(updateInfo?.hasUpdate)}
         />
       )}
 
@@ -435,6 +478,7 @@ export function App() {
             onBackToDashboard={handleExitToDashboard}
             onStartWeakPractice={handleStartWeakPractice}
             onReloadData={reloadData}
+            onCheckUpdates={() => handleCheckForUpdates(true)}
           />
         )}
 
@@ -557,6 +601,14 @@ export function App() {
         onOpenChange={setAuthModalOpen}
         initialMode={authMode}
         onSuccess={reloadData}
+      />
+
+      {/* In-App Update Modal */}
+      <UpdateModal
+        open={updateModalOpen}
+        onOpenChange={setUpdateModalOpen}
+        updateInfo={updateInfo}
+        currentUserId={currentUser?.uid}
       />
 
       {/* Global In-App Toast Container */}

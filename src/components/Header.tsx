@@ -33,6 +33,8 @@ interface HeaderProps {
   onQuickSync?: () => Promise<void>;
   isSyncingCloud?: boolean;
   streakDays?: number;
+  onCheckUpdates?: () => void;
+  hasPendingUpdate?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -48,6 +50,8 @@ export const Header: React.FC<HeaderProps> = ({
   onQuickSync,
   isSyncingCloud = false,
   streakDays = 1,
+  onCheckUpdates,
+  hasPendingUpdate = false,
 }) => {
   const { isDark, toggleTheme } = useTheme();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -245,6 +249,19 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </Button>
 
+          {/* New Version Alert Badge */}
+          {hasPendingUpdate && (
+            <button
+              type="button"
+              onClick={onCheckUpdates}
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold hover:bg-amber-500/25 transition-all cursor-pointer animate-pulse shadow-xs"
+              title="Đã có phiên bản mới! Bấm để cập nhật"
+            >
+              <Sparkles className="size-3.5 fill-current" />
+              <span>Bản mới!</span>
+            </button>
+          )}
+
           {/* ================================================================= */}
           {/* USER AUTH & PROFILE DROPDOWN MENU */}
           {/* ================================================================= */}
@@ -323,6 +340,27 @@ export const Header: React.FC<HeaderProps> = ({
                           <span>Đồng bộ Cloud ngay</span>
                         </span>
                         {isSyncingCloud && <Loader2 className="size-3.5 animate-spin text-primary" />}
+                      </button>
+                    )}
+
+                    {onCheckUpdates && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          onCheckUpdates();
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-foreground hover:bg-muted/80 transition-colors cursor-pointer text-left"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <Sparkles className="size-4 text-amber-500" />
+                          <span>Kiểm tra bản cập nhật</span>
+                        </span>
+                        {hasPendingUpdate ? (
+                          <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground font-mono">v1.0.0</span>
+                        )}
                       </button>
                     )}
                   </div>
