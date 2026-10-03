@@ -59,15 +59,40 @@ fn open_url(url: String) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  let res = tauri::Builder::default()
+  let app = tauri::Builder::default()
     .runtime(tauri_runtime_wry::Wry::default())
     .invoke_handler(tauri::generate_handler![show_busy_popup, hide_busy_popup, open_url])
+    .on_window_event(|window, event| {
+      match event {
+        tauri::WindowEvent::CloseRequested { .. } | tauri::WindowEvent::Destroyed => {
+          if window.label() == "main" {
+            let handle = window.app_handle();
+            let _ = handle.exit(0);
+            #[cfg(target_os = "windows")]
+            {
+              std::process::exit(0);
+            }
+          }
+        }
+        _ => {}
+      }
+    })
     .setup(|_app| {
       Ok(())
     })
-    .run(tauri::generate_context!());
+    .build(tauri::generate_context!());
 
-  if let Err(e) = res {
-    eprintln!("Run error: {:?}", e);
+  match app {
+    Ok(app) => {
+      app.run(|_app_handle, event| {
+        if let tauri::RunEvent::Exit = event {
+          std::process::exit(0);
+        }
+      });
+    }
+    Err(e) => {
+      eprintln!("Run error: {:?}", e);
+    }
   }
 }
+
