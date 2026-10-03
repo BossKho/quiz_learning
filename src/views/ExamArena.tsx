@@ -365,16 +365,27 @@ export const ExamArena = ({
                 {answeredCount} / {totalCount} answered
               </div>
 
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => setCurrentIndex((i) => Math.min(totalCount - 1, i + 1))}
-                disabled={currentIndex === totalCount - 1}
-                className="gap-1 text-xs"
-              >
-                Next
-                <ArrowRight className="size-3.5" />
-              </Button>
+              {currentIndex < totalCount - 1 ? (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setCurrentIndex((i) => Math.min(totalCount - 1, i + 1))}
+                  className="gap-1 text-xs cursor-pointer"
+                >
+                  Next
+                  <ArrowRight className="size-3.5" />
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setShowSubmitModal(true)}
+                  className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer shadow-md active:scale-95"
+                >
+                  <Send className="size-3.5" />
+                  <span>Nộp bài thi</span>
+                </Button>
+              )}
             </div>
           </Card>
         </div>
@@ -438,6 +449,19 @@ export const ExamArena = ({
                   </button>
                 );
               })}
+            </div>
+
+            {/* Quick Submit Button below Question Matrix */}
+            <div className="pt-2 border-t border-border">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setShowSubmitModal(true)}
+                className="w-full gap-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer shadow-sm active:scale-95"
+              >
+                <Send className="size-3.5" />
+                <span>Nộp bài thi ({answeredCount}/{totalCount})</span>
+              </Button>
             </div>
           </Card>
         </div>

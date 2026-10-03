@@ -14,7 +14,10 @@ import {
   XCircle,
   AlertCircle,
   Sun,
-  Moon
+  Moon,
+  Trophy,
+  RotateCcw,
+  RotateCw
 } from 'lucide-react';
 import {
   Dialog,
@@ -55,6 +58,7 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
     return initial;
   });
   const [localStats, setLocalStats] = useState<Record<string, QuestionStats>>({});
+  const [isCompleted, setIsCompleted] = useState(session.is_completed || false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
 
@@ -144,7 +148,58 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
     triggerAutoCloudSync();
   }, [currentQ, qId, selectedOptions, currentIndex, session, userAnswers, onUpdateSession]);
 
-  // Advance to next question
+  // Statistics calculation for study progress & completion
+  const studyStats = useMemo(() => {
+    let correctCount = 0;
+    let incorrectCount = 0;
+    const incorrectQuestions: ShuffledQuestion[] = [];
+
+    for (const q of preparedQuestions) {
+      const ans = userAnswers[q.id];
+      if (ans && ans.length > 0) {
+        if (isAnswerCorrect(ans, q.answer)) {
+          correctCount++;
+        } else {
+          incorrectCount++;
+          incorrectQuestions.push(q);
+        }
+      }
+    }
+
+    const answeredCount = Object.keys(userAnswers).filter(
+      (id) => userAnswers[id] && userAnswers[id].length > 0
+    ).length;
+    const totalCount = preparedQuestions.length;
+    const accuracyPercent = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+
+    return {
+      answeredCount,
+      totalCount,
+      correctCount,
+      incorrectCount,
+      accuracyPercent,
+      incorrectQuestions,
+    };
+  }, [preparedQuestions, userAnswers]);
+
+  // Finish study session & save completion to DB
+  const handleFinishStudy = useCallback(async () => {
+    const finalSession: ActiveSession = {
+      ...session,
+      current_index: currentIndex,
+      user_answers: userAnswers,
+      is_completed: true,
+      score: studyStats.accuracyPercent,
+      updated_at: Date.now(),
+    };
+    onUpdateSession(finalSession);
+    await dbService.saveSession(finalSession);
+    dbService.persistImmediate();
+    triggerAutoCloudSync();
+    setIsCompleted(true);
+  }, [currentIndex, session, userAnswers, studyStats.accuracyPercent, onUpdateSession]);
+
+  // Advance to next question (or finish if on the last question)
   const handleNext = useCallback(async () => {
     if (currentIndex < preparedQuestions.length - 1) {
       const nextIdx = currentIndex + 1;
@@ -161,8 +216,61 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
       await dbService.saveSession(updated);
       dbService.persistImmediate();
       triggerAutoCloudSync();
+    } else {
+      // Reached the end of the deck (question 60/60) -> finish and show completion!
+      await handleFinishStudy();
     }
-  }, [currentIndex, preparedQuestions.length, session, userAnswers, onUpdateSession]);
+  }, [currentIndex, preparedQuestions.length, session, userAnswers, onUpdateSession, handleFinishStudy]);
+
+  const handleRestartAll = useCallback(async () => {
+    setCurrentIndex(0);
+    setUserAnswers({});
+    setSubmittedQuestions({});
+    setShowExplanationOverride(false);
+    setIsCompleted(false);
+
+    const restarted: ActiveSession = {
+      ...session,
+      current_index: 0,
+      user_answers: {},
+      is_completed: false,
+      score: undefined,
+      updated_at: Date.now(),
+    };
+    onUpdateSession(restarted);
+    await dbService.saveSession(restarted);
+    dbService.persistImmediate();
+    triggerAutoCloudSync();
+  }, [session, onUpdateSession]);
+
+  const handleReviewMistakesOnly = useCallback(async () => {
+    if (studyStats.incorrectQuestions.length === 0) return;
+    const firstMistakeQ = studyStats.incorrectQuestions[0];
+    const targetIdx = preparedQuestions.findIndex((q) => q.id === firstMistakeQ.id);
+    const newAnswers = { ...userAnswers };
+    const newSubmitted = { ...submittedQuestions };
+    for (const q of studyStats.incorrectQuestions) {
+      delete newAnswers[q.id];
+      delete newSubmitted[q.id];
+    }
+    setUserAnswers(newAnswers);
+    setSubmittedQuestions(newSubmitted);
+    setCurrentIndex(targetIdx >= 0 ? targetIdx : 0);
+    setShowExplanationOverride(false);
+    setIsCompleted(false);
+
+    const updated: ActiveSession = {
+      ...session,
+      current_index: targetIdx >= 0 ? targetIdx : 0,
+      user_answers: newAnswers,
+      is_completed: false,
+      updated_at: Date.now(),
+    };
+    onUpdateSession(updated);
+    await dbService.saveSession(updated);
+    dbService.persistImmediate();
+    triggerAutoCloudSync();
+  }, [studyStats.incorrectQuestions, preparedQuestions, userAnswers, submittedQuestions, session, onUpdateSession]);
 
   // Go to previous question
   const handlePrev = useCallback(async () => {
@@ -275,6 +383,85 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
     exitConfirmOpen,
   ]);
 
+  if (isCompleted) {
+    const hasMistakes = studyStats.incorrectQuestions.length > 0;
+    return (
+      <div className="max-w-2xl mx-auto px-6 py-12 animate-in fade-in-50 duration-300">
+        <Card className="p-8 sm:p-10 text-center space-y-6 border-border bg-card shadow-xl rounded-3xl">
+          <div className="size-20 rounded-3xl bg-gradient-to-tr from-amber-500/20 via-primary/20 to-emerald-500/20 flex items-center justify-center mx-auto text-amber-500 border border-amber-500/30 shadow-lg shadow-amber-500/10">
+            <Trophy className="size-10 text-amber-500" />
+          </div>
+
+          <div className="space-y-2">
+            <Badge variant="outline" className="text-xs font-mono uppercase tracking-wider font-bold text-primary border-primary/30 bg-primary/5">
+              Hoàn thành bài học
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl font-black text-foreground">
+              Tổng Kết Phiên Học Tập
+            </h2>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">
+              Bạn đã hoàn thành bộ đề <strong>{session.deck_title}</strong>. Tiến độ học và thứ hạng hộp Leitner đã được tự động lưu trữ và đồng bộ an toàn.
+            </p>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-muted/40 border border-border/80">
+            <div className="space-y-1">
+              <div className="text-xl sm:text-2xl font-black text-foreground font-mono">
+                {studyStats.accuracyPercent}%
+              </div>
+              <div className="text-[11px] text-muted-foreground">Độ chính xác</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xl sm:text-2xl font-black text-emerald-500 font-mono flex items-center justify-center gap-1">
+                <CheckCircle2 className="size-4.5" /> {studyStats.correctCount}
+              </div>
+              <div className="text-[11px] text-muted-foreground">Trả lời đúng</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xl sm:text-2xl font-black text-destructive font-mono flex items-center justify-center gap-1">
+                <XCircle className="size-4.5" /> {studyStats.incorrectCount}
+              </div>
+              <div className="text-[11px] text-muted-foreground">Cần xem lại</div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            {hasMistakes && (
+              <Button
+                variant="default"
+                onClick={handleReviewMistakesOnly}
+                className="flex-1 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer active:scale-95 shadow-md flex items-center justify-center gap-2"
+              >
+                <RotateCcw className="size-4" />
+                Ôn ngay {studyStats.incorrectCount} câu sai
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              onClick={handleRestartAll}
+              className="flex-1 h-11 rounded-xl border-border/80 text-foreground font-semibold cursor-pointer active:scale-95"
+            >
+              <RotateCw className="size-4 mr-2" />
+              Luyện lại toàn bộ ({studyStats.totalCount} câu)
+            </Button>
+
+            <Button
+              variant="secondary"
+              onClick={onExit}
+              className="flex-1 h-11 rounded-xl font-bold cursor-pointer active:scale-95"
+            >
+              <ArrowLeft className="size-4 mr-2" />
+              Về Trang chủ
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   if (!currentQ) {
     return <div className="p-8 text-center text-muted-foreground">No questions found in this deck.</div>;
   }
@@ -302,6 +489,20 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Finish / Nộp bài sớm */}
+          {Object.keys(userAnswers).length > 0 && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleFinishStudy}
+              className="text-xs gap-1.5 h-8 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs active:scale-95"
+              title="Hoàn thành bài học và xem bảng tổng kết kết quả"
+            >
+              <CheckCircle2 className="size-3.5" />
+              <span>Nộp bài học</span>
+            </Button>
+          )}
+
           {/* Translation Toggle */}
           <Button
             variant={showVi ? 'study' : 'outline'}
@@ -469,21 +670,39 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
               </Button>
             )}
 
-            {/* Next button */}
-            {isAnswerSubmitted && (
+            {/* Next or Finish button */}
+            {isAnswerSubmitted ? (
               <Button
-                variant="study"
+                variant={currentIndex < preparedQuestions.length - 1 ? 'study' : 'default'}
                 size="sm"
                 onClick={handleNext}
-                className="gap-2 px-6 font-semibold text-xs"
+                className={`gap-2 px-6 font-semibold text-xs cursor-pointer active:scale-95 shadow-xs ${
+                  currentIndex >= preparedQuestions.length - 1
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    : ''
+                }`}
               >
                 <span>{currentIndex < preparedQuestions.length - 1 ? 'Sang câu tiếp theo' : 'Hoàn thành bài học'}</span>
-                <ArrowRight className="size-3.5" />
+                {currentIndex < preparedQuestions.length - 1 ? (
+                  <ArrowRight className="size-3.5" />
+                ) : (
+                  <CheckCircle2 className="size-3.5 text-white" />
+                )}
                 <kbd className="font-mono text-[10px] bg-white/20 px-1.5 py-0.5 rounded">
                   Space
                 </kbd>
               </Button>
-            )}
+            ) : currentIndex === preparedQuestions.length - 1 ? (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleFinishStudy}
+                className="gap-2 px-6 font-semibold text-xs bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer active:scale-95 shadow-xs"
+              >
+                <CheckCircle2 className="size-3.5" />
+                <span>Nộp bài & Hoàn thành</span>
+              </Button>
+            ) : null}
           </div>
         </div>
 

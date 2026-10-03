@@ -16,8 +16,7 @@ import {
   ExternalLink, 
   Loader2, 
   CheckCircle2, 
-  Package, 
-  Laptop
+  Package
 } from 'lucide-react';
 import { type UpdateInfo, executePreUpdateShield, openExternalUrl } from '@/services/updateService';
 import { toast } from '@/components/ui/toast';
@@ -41,9 +40,8 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
 
   if (!updateInfo) return null;
 
-  const handleUpdate = async (type: 'setup' | 'portable') => {
-    const asset = type === 'setup' ? updateInfo.setupAsset : updateInfo.portableAsset;
-    const downloadUrl = asset?.downloadUrl || updateInfo.releaseUrl;
+  const handleUpdate = async () => {
+    const downloadUrl = updateInfo.setupAsset?.downloadUrl || updateInfo.releaseUrl;
 
     setIsProcessing(true);
     setDownloadCompleted(false);
@@ -59,7 +57,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
       }
 
       // Step 2: Open download stream
-      setProcessStep('Bắt đầu tải tệp cài đặt...');
+      setProcessStep('Bắt đầu tải bộ cài đặt mới...');
       await openExternalUrl(downloadUrl);
 
       setDownloadCompleted(true);
@@ -79,7 +77,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !isProcessing && onOpenChange(val)}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 border-border shadow-2xl">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-6 border-border shadow-2xl">
         <DialogHeader className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -130,7 +128,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
         {/* Release Notes / Changelog */}
         <div className="space-y-2">
           <div className="text-xs font-bold text-foreground flex items-center justify-between">
-            <span>Nội dung cập nhật & Tính năng mới:</span>
+            <span>Nội dung cập nhật & Sửa lỗi:</span>
             <button
               type="button"
               onClick={handleViewOnGitHub}
@@ -142,7 +140,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
           </div>
 
           <div className="max-h-44 overflow-y-auto rounded-2xl border border-border bg-muted/40 p-3.5 text-xs text-foreground/90 font-sans leading-relaxed whitespace-pre-line select-text">
-            {updateInfo.releaseNotes || 'Bản cập nhật cải thiện tính năng, bổ sung ngân hàng câu hỏi và sửa các lỗi tồn đọng.'}
+            {updateInfo.releaseNotes || 'Bản cập nhật cải thiện tính năng, bổ sung nút nộp bài và tối ưu độ ổn định hệ thống.'}
           </div>
         </div>
 
@@ -159,76 +157,41 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
             <CheckCircle2 className="size-5 text-emerald-500 shrink-0 mt-0.5" />
             <div className="space-y-1 text-xs">
               <div className="font-bold text-emerald-700 dark:text-emerald-300">
-                Đã mở trình tải tệp thành công!
+                Đã mở trình tải tệp cài đặt thành công!
               </div>
               <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
-                Khi file tải xong, hãy chạy file mới để hoàn tất. Bạn có thể đóng cửa sổ này và tiếp tục học tập.
+                Sau khi tệp tải về, bạn chỉ cần mở file để cài đặt đè. Toàn bộ tài khoản và tiến độ học tập sẽ được giữ nguyên 100%.
               </p>
             </div>
           </div>
         )}
 
-        {/* Action Options */}
-        <div className="space-y-2.5 pt-1">
-          <div className="text-xs font-bold text-foreground">Chọn phương thức cập nhật:</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Setup Option */}
-            <div className="rounded-2xl border border-border bg-card p-3.5 flex flex-col justify-between gap-3 hover:border-primary/50 transition-colors">
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Package className="size-4 text-primary" />
-                    <span className="text-xs font-bold text-foreground">Bản Cài Đặt (Setup)</span>
-                  </div>
-                  <Badge variant="outline" className="text-[10px] text-primary border-primary/30">
-                    Khuyên Dùng
-                  </Badge>
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-1.5">
-                  Tự động ghi đè bản cũ, tạo shortcut Desktop. Dung lượng: ~{updateInfo.setupAsset?.sizeFormatted || '5.5 MB'}.
-                </p>
-              </div>
-
-              <Button
-                size="sm"
-                disabled={isProcessing}
-                onClick={() => handleUpdate('setup')}
-                className="w-full rounded-xl text-xs font-bold gap-1.5 cursor-pointer bg-primary hover:bg-primary/90 text-white shadow-xs"
-              >
-                <DownloadCloud className="size-3.5" />
-                <span>Cập nhật bản Setup</span>
-              </Button>
+        {/* Primary 1-Click Update Action Card */}
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-3 hover:border-primary/50 transition-colors shadow-2xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Package className="size-4 text-primary" />
+              <span className="text-xs font-bold text-foreground">Bản Cài Đặt Chính Thức (Setup Installer)</span>
             </div>
-
-            {/* Portable Option */}
-            <div className="rounded-2xl border border-border bg-card p-3.5 flex flex-col justify-between gap-3 hover:border-indigo-500/50 transition-colors">
-              <div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Laptop className="size-4 text-indigo-500" />
-                    <span className="text-xs font-bold text-foreground">Bản Di Động (Portable)</span>
-                  </div>
-                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                    Chạy Ngay
-                  </Badge>
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-1.5">
-                  Không cần cài đặt, chạy độc lập từ USB hoặc thư mục bất kỳ. Dung lượng: ~{updateInfo.portableAsset?.sizeFormatted || '30 MB'}.
-                </p>
-              </div>
-
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={isProcessing}
-                onClick={() => handleUpdate('portable')}
-                className="w-full rounded-xl text-xs font-bold gap-1.5 cursor-pointer hover:bg-muted"
-              >
-                <DownloadCloud className="size-3.5" />
-                <span>Tải bản Portable</span>
-              </Button>
-            </div>
+            {updateInfo.setupAsset?.sizeFormatted && (
+              <Badge variant="outline" className="text-[10px] text-primary border-primary/30">
+                ~{updateInfo.setupAsset.sizeFormatted}
+              </Badge>
+            )}
           </div>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Tự động cập nhật tệp ứng dụng, cập nhật shortcut Desktop và giữ nguyên vẹn 100% dữ liệu đã học.
+          </p>
+
+          <Button
+            size="default"
+            disabled={isProcessing}
+            onClick={handleUpdate}
+            className="w-full rounded-xl text-xs font-bold gap-2 cursor-pointer bg-gradient-to-r from-primary to-indigo-600 hover:opacity-95 text-white shadow-md h-10"
+          >
+            <DownloadCloud className="size-4" />
+            <span>Cập nhật ngay (1-Click)</span>
+          </Button>
         </div>
 
         <DialogFooter className="flex items-center justify-between pt-2 border-t border-border sm:justify-between">
@@ -258,3 +221,4 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
     </Dialog>
   );
 };
+

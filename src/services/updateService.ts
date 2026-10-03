@@ -2,7 +2,7 @@ import { dbService } from '@/services/db';
 import { syncCloudImmediate } from '@/services/firebaseService';
 import { isTauri, invoke } from '@tauri-apps/api/core';
 
-export const CURRENT_APP_VERSION = '1.0.0';
+export const CURRENT_APP_VERSION = '1.2.0';
 export const GITHUB_REPO_OWNER = 'BossKho';
 export const GITHUB_REPO_NAME = 'quiz_learning';
 
@@ -23,7 +23,6 @@ export interface UpdateInfo {
   publishedAt: string;
   releaseUrl: string;
   setupAsset?: ReleaseAsset;
-  portableAsset?: ReleaseAsset;
 }
 
 /**
@@ -45,7 +44,6 @@ function formatFileSize(bytes: number): string {
 export function parseVersion(versionStr: string): number[] {
   if (!versionStr) return [0, 0, 0];
 
-  // Try matching standard semver e.g. 1.2.3 or 1.2
   const match = versionStr.match(/\d+(\.\d+)*/);
   if (!match) return [0, 0, 0];
 
@@ -142,15 +140,13 @@ export async function checkForAppUpdates(): Promise<UpdateInfo> {
     };
   }
 
-  // Determine latest version from name (e.g. "Ver 1.1") or tag_name (e.g. "version1", "v1.1")
+  // Determine latest version from name (e.g. "Ver 1.2") or tag_name (e.g. "v1.2.0")
   const tagName = releaseData.tag_name || '';
   const releaseName = releaseData.name || tagName;
-  
-  // Prefer version from name if it contains dots (e.g. "Ver 1.1"), otherwise tag
+
   const nameVersionNumbers = parseVersion(releaseName);
   const tagVersionNumbers = parseVersion(tagName);
-  
-  // Pick the higher version detection between name and tag
+
   let targetVersionStr = tagName;
   if (nameVersionNumbers[1] > tagVersionNumbers[1] || nameVersionNumbers[0] > tagVersionNumbers[0]) {
     targetVersionStr = releaseName;
@@ -159,9 +155,8 @@ export async function checkForAppUpdates(): Promise<UpdateInfo> {
   const latestVersionDisplay = `${parseVersion(targetVersionStr).join('.')}`;
   const isNewer = compareVersions(latestVersionDisplay, currentVersion) > 0;
 
-  // Extract assets
+  // Extract setup installer asset
   let setupAsset: ReleaseAsset | undefined;
-  let portableAsset: ReleaseAsset | undefined;
 
   if (Array.isArray(releaseData.assets)) {
     for (const asset of releaseData.assets) {
@@ -173,10 +168,9 @@ export async function checkForAppUpdates(): Promise<UpdateInfo> {
         downloadUrl: asset.browser_download_url,
       };
 
-      if (assetName.includes('portable')) {
-        portableAsset = assetObj;
-      } else if (assetName.includes('setup') || assetName.endsWith('.exe')) {
+      if (assetName.includes('setup') || assetName.endsWith('.exe')) {
         setupAsset = assetObj;
+        break;
       }
     }
   }
@@ -187,11 +181,10 @@ export async function checkForAppUpdates(): Promise<UpdateInfo> {
     latestVersion: latestVersionDisplay,
     releaseTag: tagName,
     releaseName: releaseName || `Bản phát hành ${latestVersionDisplay}`,
-    releaseNotes: releaseData.body || 'Cập nhật tính năng và tối ưu hiệu suất làm bài.',
+    releaseNotes: releaseData.body || 'Cập nhật tính năng, tối ưu trải nghiệm và sửa các lỗi phát sinh.',
     publishedAt: releaseData.published_at ? new Date(releaseData.published_at).toLocaleDateString('vi-VN') : '',
     releaseUrl: releaseData.html_url || `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/releases`,
     setupAsset,
-    portableAsset,
   };
 }
 
@@ -214,3 +207,4 @@ export async function executePreUpdateShield(uid?: string | null): Promise<boole
     return false;
   }
 }
+

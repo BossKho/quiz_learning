@@ -37,6 +37,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { toast } from '@/components/ui/toast';
+import { CURRENT_APP_VERSION } from '@/services/updateService';
 
 interface ProfileViewProps {
   onBackToDashboard: () => void;
@@ -700,7 +701,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <div className="pt-3 border-t border-border space-y-2.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-foreground">Phiên bản ứng dụng:</span>
-              <span className="font-mono font-bold text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-lg border border-border">v1.0.0</span>
+              <span className="font-mono font-bold text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-lg border border-border">v{CURRENT_APP_VERSION}</span>
             </div>
             {onCheckUpdates && (
               <Button

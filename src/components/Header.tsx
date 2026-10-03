@@ -19,6 +19,7 @@ import {
 import { useTheme } from '@/lib/theme';
 import { signOutUser } from '@/services/firebaseService';
 import { toast } from '@/components/ui/toast';
+import { CURRENT_APP_VERSION } from '@/services/updateService';
 
 interface HeaderProps {
   currentView: string;
@@ -359,7 +360,7 @@ export const Header: React.FC<HeaderProps> = ({
                         {hasPendingUpdate ? (
                           <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
                         ) : (
-                          <span className="text-[10px] text-muted-foreground font-mono">v1.0.0</span>
+                          <span className="text-[10px] text-muted-foreground font-mono">v{CURRENT_APP_VERSION}</span>
                         )}
                       </button>
                     )}
