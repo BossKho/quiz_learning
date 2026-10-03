@@ -335,37 +335,17 @@ export function App() {
     await reloadData();
   };
 
-  // Tự động lưu tức thì cơ sở dữ liệu và đồng bộ khi người dùng bấm dấu X thoát app
+  // Tự động lưu tức thì cơ sở dữ liệu khi người dùng thoát app
   useEffect(() => {
-    let unlistenClose: (() => void) | null = null;
-
-    if (isTauri()) {
-      import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
-        const win = getCurrentWindow();
-        win.onCloseRequested(async () => {
-          dbService.persistImmediate();
-          if (currentUser) {
-            await syncCloudImmediate(currentUser.uid);
-          }
-        }).then((unlisten) => {
-          unlistenClose = unlisten;
-        });
-      });
-    }
-
     const handleBeforeUnload = () => {
       dbService.persistImmediate();
-      if (currentUser) {
-        syncCloudImmediate(currentUser.uid);
-      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      if (unlistenClose) unlistenClose();
     };
-  }, [currentUser]);
+  }, []);
 
   if (!isDbReady) {
     if (initError) {
