@@ -1366,7 +1366,17 @@ const CleanDeckCard: React.FC<CleanDeckCardProps> = ({ deck, type = 'topic', bad
   const learning = deck.learning_count || 0;
   const total = deck.total_questions || 60;
   const percentMastered = total > 0 ? Math.round((mastered / total) * 100) : 0;
-  const unattempted = Math.max(0, total - mastered - learning);
+
+  // Real-time active session progress
+  const answeredCount = activeSession 
+    ? Math.max(activeSession.current_index + 1, Object.keys(activeSession.user_answers || {}).length)
+    : 0;
+  const sessionPercent = activeSession && total > 0 
+    ? Math.min(100, Math.round((answeredCount / total) * 100))
+    : 0;
+
+  const displayLearning = learning > 0 ? learning : (activeSession ? answeredCount : 0);
+  const unattempted = Math.max(0, total - mastered - displayLearning);
 
   const isMock = type === 'mock';
   const isDe = type === 'de';
@@ -1422,8 +1432,8 @@ const CleanDeckCard: React.FC<CleanDeckCardProps> = ({ deck, type = 'topic', bad
             <div className="text-[11px] text-muted-foreground mt-0.5 font-semibold">Đã thuộc</div>
           </div>
           <div className="bg-secondary/60 rounded-xl p-2 border border-border">
-            <div className="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 font-mono">{learning}</div>
-            <div className="text-[11px] text-muted-foreground mt-0.5 font-semibold">Đang học</div>
+            <div className="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 font-mono">{displayLearning}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5 font-semibold">{activeSession && learning === 0 ? 'Đã làm' : 'Đang học'}</div>
           </div>
           <div className="bg-secondary/60 rounded-xl p-2 border border-border">
             <div className="text-xs sm:text-sm font-extrabold text-foreground font-mono">{unattempted}</div>
@@ -1434,26 +1444,48 @@ const CleanDeckCard: React.FC<CleanDeckCardProps> = ({ deck, type = 'topic', bad
 
       {/* Progress & Bottom Actions */}
       <div className="space-y-3 relative z-10">
-        {/* Leitner Progress Bar */}
+        {/* Progress Bar */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Tiến độ ghi nhớ: <strong className="text-foreground font-mono">{percentMastered}%</strong></span>
-            <span className="font-mono text-[11px]">{mastered}/{total} câu</span>
+            {activeSession ? (
+              <>
+                <span className="text-amber-500 font-bold flex items-center gap-1.5">
+                  <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Tiến độ đang làm: <strong className="font-mono">{sessionPercent}%</strong>
+                </span>
+                <span className="font-mono text-[11px] font-semibold text-amber-500">{answeredCount}/{total} câu</span>
+              </>
+            ) : (
+              <>
+                <span>Tiến độ ghi nhớ: <strong className="text-foreground font-mono">{percentMastered}%</strong></span>
+                <span className="font-mono text-[11px]">{mastered}/{total} câu</span>
+              </>
+            )}
           </div>
           <div className="h-2.5 w-full rounded-full bg-secondary/80 overflow-hidden flex shadow-inner">
-            {mastered > 0 && (
+            {activeSession ? (
               <div
-                className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-300"
-                style={{ width: `${percentMastered}%` }}
-                title={`Đã thuộc: ${mastered}`}
+                className="bg-gradient-to-r from-amber-500 to-orange-400 h-full transition-all duration-300"
+                style={{ width: `${sessionPercent}%` }}
+                title={`Đang làm: ${answeredCount}/${total} câu`}
               />
-            )}
-            {learning > 0 && (
-              <div
-                className="bg-gradient-to-r from-amber-500 to-amber-400 h-full transition-all duration-300"
-                style={{ width: `${total > 0 ? (learning / total) * 100 : 0}%` }}
-                title={`Đang học: ${learning}`}
-              />
+            ) : (
+              <>
+                {mastered > 0 && (
+                  <div
+                    className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-300"
+                    style={{ width: `${percentMastered}%` }}
+                    title={`Đã thuộc: ${mastered}`}
+                  />
+                )}
+                {learning > 0 && (
+                  <div
+                    className="bg-gradient-to-r from-amber-500 to-amber-400 h-full transition-all duration-300"
+                    style={{ width: `${total > 0 ? (learning / total) * 100 : 0}%` }}
+                    title={`Đang học: ${learning}`}
+                  />
+                )}
+              </>
             )}
           </div>
         </div>
@@ -1486,7 +1518,16 @@ const DeckListRow: React.FC<DeckListRowProps> = ({ deck, activeSession, onClick 
   const total = deck.total_questions || 60;
   const percentMastered = total > 0 ? Math.round((mastered / total) * 100) : 0;
   const percentLearning = total > 0 ? Math.round((learning / total) * 100) : 0;
-  const hasProgress = mastered > 0 || learning > 0;
+
+  // Real-time active session progress
+  const answeredCount = activeSession 
+    ? Math.max(activeSession.current_index + 1, Object.keys(activeSession.user_answers || {}).length)
+    : 0;
+  const sessionPercent = activeSession && total > 0 
+    ? Math.min(100, Math.round((answeredCount / total) * 100))
+    : 0;
+
+  const hasProgress = mastered > 0 || learning > 0 || Boolean(activeSession);
 
   return (
     <div
@@ -1519,7 +1560,11 @@ const DeckListRow: React.FC<DeckListRowProps> = ({ deck, activeSession, onClick 
       <div className="flex items-center gap-4 shrink-0">
         <div className="hidden sm:flex flex-col items-end gap-1 w-36">
           <div className="text-[10px] font-mono font-medium text-muted-foreground">
-            {!hasProgress ? (
+            {activeSession ? (
+              <span className="text-amber-500 font-bold">
+                {sessionPercent}% ({answeredCount}/{total} câu)
+              </span>
+            ) : !hasProgress ? (
               <span>0% (0/{total} câu)</span>
             ) : mastered > 0 && learning === 0 ? (
               <span className="text-emerald-600 dark:text-emerald-400 font-bold">{percentMastered}% ({mastered}/{total} câu)</span>
@@ -1532,17 +1577,26 @@ const DeckListRow: React.FC<DeckListRowProps> = ({ deck, activeSession, onClick 
             )}
           </div>
           <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden flex">
-            {mastered > 0 && (
+            {activeSession ? (
               <div
-                className="bg-emerald-500 h-full transition-all duration-300"
-                style={{ width: `${percentMastered}%` }}
+                className="bg-gradient-to-r from-amber-500 to-orange-400 h-full transition-all duration-300"
+                style={{ width: `${sessionPercent}%` }}
               />
-            )}
-            {learning > 0 && (
-              <div
-                className="bg-amber-500 h-full transition-all duration-300"
-                style={{ width: `${percentLearning}%` }}
-              />
+            ) : (
+              <>
+                {mastered > 0 && (
+                  <div
+                    className="bg-emerald-500 h-full transition-all duration-300"
+                    style={{ width: `${percentMastered}%` }}
+                  />
+                )}
+                {learning > 0 && (
+                  <div
+                    className="bg-amber-500 h-full transition-all duration-300"
+                    style={{ width: `${percentLearning}%` }}
+                  />
+                )}
+              </>
             )}
           </div>
         </div>
