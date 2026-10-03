@@ -427,12 +427,28 @@ export async function pullCloudToLocal(
   // 1. Lấy dữ liệu từ Cloud
   const cloudData = await getUserProgress(userId);
   if (!cloudData) {
+    // Nếu trên Cloud chưa có dữ liệu, lập tức đẩy dữ liệu Local hiện tại lên Cloud
+    try {
+      await syncLocalToCloud(userId);
+    } catch {}
     return { importedStats: 0, importedSessions: 0 };
   }
 
-  // 2. Nạp vào SQLite
+  // 2. Nạp và hòa trộn vào SQLite
   const jsonString = JSON.stringify(cloudData);
-  return await dbService.importProgressJSON(jsonString, mergeMode);
+  const result = await dbService.importProgressJSON(jsonString, mergeMode);
+
+  // 3. Sau khi hòa trộn thông minh (Local luôn giữ dữ liệu mới hơn), đẩy ngược lại Cloud
+  // để bảo đảm Cloud luôn cập nhật những câu mới nhất vừa làm
+  if (mergeMode === 'merge') {
+    try {
+      await syncLocalToCloud(userId);
+    } catch (err) {
+      console.warn('Đồng bộ ngược lên Cloud sau khi merge gặp lỗi:', err);
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -456,5 +472,25 @@ export function triggerAutoCloudSync(userId?: string | null): void {
       // Đang offline hoặc gián đoạn mạng, SQLite cục bộ vẫn bảo toàn 100%
     }
   }, 1000);
+}
+
+/**
+ * Đồng bộ ngay lập tức lên Cloud Firestore không chờ debounce (dùng khi lưu thoát, tắt app)
+ */
+export async function syncCloudImmediate(userId?: string | null): Promise<void> {
+  const uid = userId || auth.currentUser?.uid;
+  if (!uid) return;
+
+  if (autoSyncTimer) {
+    clearTimeout(autoSyncTimer);
+    autoSyncTimer = null;
+  }
+
+  try {
+    await syncLocalToCloud(uid);
+    console.log('[SyncImmediate] Tiến độ đã được đồng bộ lên Cloud thành công.');
+  } catch (err) {
+    console.warn('[SyncImmediate] Lưu Cloud thất bại (offline):', err);
+  }
 }
 

@@ -111,6 +111,18 @@ class DatabaseManager {
 
     // Check if initial ingestion is needed
     await this._seedDecksIfEmpty();
+
+    // Reconcile with synchronous localStorage snapshot if available to prevent any data loss
+    if (this.currentUserId && typeof localStorage !== 'undefined') {
+      const cached = localStorage.getItem(`quiz_user_progress_${this.currentUserId}`);
+      if (cached) {
+        try {
+          await this.importProgressJSON(cached, 'merge');
+        } catch (e) {
+          console.warn('Reconcile localStorage snapshot on boot failed:', e);
+        }
+      }
+    }
   }
 
   private _createSchema(): void {
@@ -304,6 +316,15 @@ class DatabaseManager {
     // QUAN TRỌNG NHẤT: Nếu là cùng một tài khoản đang hoạt động (ví dụ khi tắt mở lại app),
     // TUYỆT ĐỐI KHÔNG XÓA DỮ LIỆU ĐANG CÓ!
     if (this.currentUserId && this.currentUserId === newUserId) {
+      // Reconcile from localStorage if available to guarantee zero loss
+      if (typeof localStorage !== 'undefined') {
+        const cached = localStorage.getItem(`quiz_user_progress_${newUserId}`);
+        if (cached) {
+          try {
+            await this.importProgressJSON(cached, 'merge');
+          } catch (e) {}
+        }
+      }
       return;
     }
 
@@ -816,6 +837,12 @@ class DatabaseManager {
     await this.init();
     if (!this.db) return;
 
+    // Clean up any other unfinished session for the same deck to prevent duplicates
+    if (session.deck_id && session.deck_id !== 'custom_exam' && session.deck_id !== 'flashcard_deck') {
+      this.db.run('DELETE FROM active_sessions WHERE deck_id = ? AND id != ?;', [session.deck_id, session.id]);
+    }
+
+    const now = Date.now();
     this.db.run(`
       INSERT OR REPLACE INTO active_sessions (
         id, deck_id, deck_title, mode, current_index, total_questions,
@@ -838,10 +865,10 @@ class DatabaseManager {
       session.is_completed ? 1 : 0,
       session.score || 0,
       session.created_at,
-      Date.now(),
+      session.updated_at || now,
     ]);
 
-    this.persistDebounced();
+    this.persistImmediate();
   }
 
   async getActiveSession(sessionId: string): Promise<ActiveSession | null> {
@@ -1160,8 +1187,8 @@ class DatabaseManager {
         const oldStats = existing?.stats;
 
         const leitner_box = Math.max(oldStats?.leitner_box || 1, stat.leitner_box || 1);
-        const correct_count = (oldStats?.correct_count || 0) + (stat.correct_count || 0);
-        const incorrect_count = (oldStats?.incorrect_count || 0) + (stat.incorrect_count || 0);
+        const correct_count = Math.max(oldStats?.correct_count || 0, stat.correct_count || 0);
+        const incorrect_count = Math.max(oldStats?.incorrect_count || 0, stat.incorrect_count || 0);
         const streak = Math.max(oldStats?.streak || 0, stat.streak || 0);
         const is_bookmarked = (oldStats?.is_bookmarked || stat.is_bookmarked) ? 1 : 0;
         const last_reviewed_at = Math.max(oldStats?.last_reviewed_at || 0, stat.last_reviewed_at || 0);
@@ -1214,6 +1241,58 @@ class DatabaseManager {
     if (Array.isArray(activeSessions)) {
       for (const s of activeSessions) {
         if (!s.id) continue;
+
+        if (mergeMode === 'merge') {
+          // Check if a local session for this ID or deck already exists
+          const existingStmt = this.db.prepare(
+            'SELECT * FROM active_sessions WHERE id = ? OR (deck_id = ? AND deck_id != "custom_exam" AND deck_id != "flashcard_deck") LIMIT 1;'
+          );
+          existingStmt.bind([s.id, s.deck_id || '']);
+          let existing: ActiveSession | null = null;
+          if (existingStmt.step()) {
+            existing = this._mapRowToSession(existingStmt.getAsObject());
+          }
+          existingStmt.free();
+
+          if (existing) {
+            const localAnswers = existing.user_answers || {};
+            const incomingAnswers = s.user_answers || {};
+            const localCount = Object.keys(localAnswers).length;
+            const incomingCount = Object.keys(incomingAnswers).length;
+            const localIndex = existing.current_index || 0;
+            const incomingIndex = s.current_index || 0;
+            const localUpdated = existing.updated_at || 0;
+            const incomingUpdated = s.updated_at || 0;
+
+            // Never downgrade local session!
+            const localIsAhead = localIndex > incomingIndex || localCount > incomingCount || localUpdated >= incomingUpdated;
+            const mergedAnswers = {
+              ...(localIsAhead ? incomingAnswers : localAnswers),
+              ...(localIsAhead ? localAnswers : incomingAnswers),
+            };
+
+            const mergedSession: ActiveSession = {
+              ...(localIsAhead ? existing : s),
+              id: existing.id,
+              deck_id: existing.deck_id || s.deck_id,
+              deck_title: existing.deck_title || s.deck_title,
+              mode: existing.mode || s.mode,
+              current_index: Math.max(localIndex, incomingIndex),
+              user_answers: mergedAnswers,
+              flagged_ids: Array.from(new Set([...(existing.flagged_ids || []), ...(s.flagged_ids || [])])),
+              is_completed: existing.is_completed || Boolean(s.is_completed),
+              updated_at: Math.max(localUpdated, incomingUpdated, Date.now()),
+            };
+
+            if (s.id !== existing.id) {
+              this.db.run('DELETE FROM active_sessions WHERE id = ?;', [s.id]);
+            }
+            await this.saveSession(mergedSession);
+            importedSessions++;
+            continue;
+          }
+        }
+
         importedSessions++;
         await this.saveSession({
           id: s.id,

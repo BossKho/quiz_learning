@@ -17,6 +17,7 @@ import {
 import type { Question, ActiveSession, ExamResultSummary } from '@/types/quiz';
 import { prepareQuestionForSession, calculateExamResult, type ShuffledQuestion } from '@/services/session-engine';
 import { dbService } from '@/services/db';
+import { syncCloudImmediate } from '@/services/firebaseService';
 import { useTheme } from '@/lib/theme';
 
 interface ExamArenaProps {
@@ -545,7 +546,19 @@ export const ExamArena = ({
               <Button
                 type="button"
                 variant="destructive"
-                onClick={() => {
+                onClick={async () => {
+                  const updated: ActiveSession = {
+                    ...session,
+                    current_index: currentIndex,
+                    time_remaining_sec: timeLeftSec,
+                    user_answers: userAnswers,
+                    flagged_ids: flaggedIds,
+                    updated_at: Date.now(),
+                  };
+                  onUpdateSession(updated);
+                  await dbService.saveSession(updated);
+                  dbService.persistImmediate();
+                  await syncCloudImmediate();
                   setShowExitWarningModal(false);
                   onExit();
                 }}

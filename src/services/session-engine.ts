@@ -102,6 +102,19 @@ export async function createNewSession(
   shuffleQuestions: boolean = true,
   timeLimitSec: number = 3600
 ): Promise<ActiveSession> {
+  // Clean up any existing unfinished session for this deck so there's always at most 1 active session
+  if (deckId && deckId !== 'custom_exam' && deckId !== 'flashcard_deck') {
+    try {
+      await dbService.init();
+      const existing = (await dbService.getUnfinishedSessions()).find((s) => s.deck_id === deckId);
+      if (existing) {
+        await dbService.deleteSession(existing.id, false);
+      }
+    } catch (e) {
+      console.warn('Clean up previous session for deck failed:', e);
+    }
+  }
+
   let orderedQuestions = [...questions];
   if (shuffleQuestions) {
     orderedQuestions.sort(() => Math.random() - 0.5);

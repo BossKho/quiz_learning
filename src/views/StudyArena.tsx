@@ -27,7 +27,7 @@ import {
 import type { Question, ActiveSession, QuestionStats } from '@/types/quiz';
 import { prepareQuestionForSession, isAnswerCorrect, type ShuffledQuestion } from '@/services/session-engine';
 import { dbService } from '@/services/db';
-import { triggerAutoCloudSync } from '@/services/firebaseService';
+import { triggerAutoCloudSync, syncCloudImmediate } from '@/services/firebaseService';
 import { useTheme } from '@/lib/theme';
 
 interface StudyArenaProps {
@@ -58,9 +58,9 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
 
-  // Memoize shuffled questions for the session so options stay stable during review
+  // Memoize questions for the session with stable option positions across reloads
   const preparedQuestions = useMemo<ShuffledQuestion[]>(() => {
-    return questions.map((q) => prepareQuestionForSession(q, true));
+    return questions.map((q) => prepareQuestionForSession(q, false));
   }, [questions]);
 
   const currentQ = preparedQuestions[currentIndex];
@@ -100,6 +100,7 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
       };
       onUpdateSession(updated);
       await dbService.saveSession(updated);
+      dbService.persistImmediate();
       triggerAutoCloudSync();
     } else {
       // Multi-select toggle
@@ -139,6 +140,7 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
     };
     onUpdateSession(updated);
     await dbService.saveSession(updated);
+    dbService.persistImmediate();
     triggerAutoCloudSync();
   }, [currentQ, qId, selectedOptions, currentIndex, session, userAnswers, onUpdateSession]);
 
@@ -157,17 +159,29 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
       };
       onUpdateSession(updated);
       await dbService.saveSession(updated);
+      dbService.persistImmediate();
       triggerAutoCloudSync();
     }
   }, [currentIndex, preparedQuestions.length, session, userAnswers, onUpdateSession]);
 
   // Go to previous question
-  const handlePrev = useCallback(() => {
+  const handlePrev = useCallback(async () => {
     if (currentIndex > 0) {
-      setCurrentIndex((i) => i - 1);
+      const prevIdx = currentIndex - 1;
+      setCurrentIndex(prevIdx);
       setShowExplanationOverride(false);
+
+      const updated: ActiveSession = {
+        ...session,
+        current_index: prevIdx,
+        user_answers: userAnswers,
+        updated_at: Date.now(),
+      };
+      onUpdateSession(updated);
+      await dbService.saveSession(updated);
+      dbService.persistImmediate();
     }
-  }, [currentIndex]);
+  }, [currentIndex, session, userAnswers, onUpdateSession]);
 
   // Toggle bookmark
   const handleToggleBookmark = useCallback(async () => {
@@ -560,7 +574,8 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
                 };
                 onUpdateSession(updated);
                 await dbService.saveSession(updated);
-                triggerAutoCloudSync();
+                dbService.persistImmediate();
+                await syncCloudImmediate();
                 setExitConfirmOpen(false);
                 onExit();
               }}

@@ -21,7 +21,7 @@ import { isTauri } from '@tauri-apps/api/core';
 import { getAvailableTopics } from '@/config/topics';
 import { Loader2 } from 'lucide-react';
 import type { User } from 'firebase/auth';
-import { subscribeToAuthState, syncLocalToCloud, pullCloudToLocal, triggerAutoCloudSync } from '@/services/firebaseService';
+import { subscribeToAuthState, syncLocalToCloud, pullCloudToLocal, syncCloudImmediate } from '@/services/firebaseService';
 import { AuthModal } from '@/components/AuthModal';
 import { ProfileView } from '@/views/ProfileView';
 import { LandingPage } from '@/views/LandingPage';
@@ -213,11 +213,15 @@ export function App() {
       deck.title,
       mode,
       qs,
-      mode === 'study',
+      false, // Keep standard question sequence for certification mock tests
       3600 // 60 minutes
     );
 
-    setSessionQuestions(qs);
+    // Keep questions mapped exactly to session.question_ids
+    const questionMap = new Map(qs.map((q) => [q.id, q]));
+    const ordered = session.question_ids.map((id) => questionMap.get(id)).filter(Boolean) as Question[];
+
+    setSessionQuestions(ordered.length > 0 ? ordered : qs);
     setActiveSession(session);
     setCurrentView(mode);
   };
@@ -230,6 +234,15 @@ export function App() {
     if (qs.length === 0 && session.question_ids && session.question_ids.length > 0) {
       const loaded = await Promise.all(session.question_ids.map((id) => dbService.getQuestion(id)));
       qs = loaded.filter(Boolean) as Question[];
+    }
+
+    // Ensure questions are ordered exactly as recorded in the session
+    if (session.question_ids && session.question_ids.length > 0) {
+      const questionMap = new Map(qs.map((q) => [q.id, q]));
+      const ordered = session.question_ids.map((id) => questionMap.get(id)).filter(Boolean) as Question[];
+      if (ordered.length > 0) {
+        qs = ordered;
+      }
     }
 
     setActiveSession(session);
@@ -317,19 +330,42 @@ export function App() {
     setCurrentView('dashboard');
     dbService.persistImmediate();
     if (currentUser) {
-      triggerAutoCloudSync(currentUser.uid);
+      syncCloudImmediate(currentUser.uid);
     }
     await reloadData();
   };
 
-  // Tự động lưu tức thì cơ sở dữ liệu khi người dùng bấm dấu X thoát app
+  // Tự động lưu tức thì cơ sở dữ liệu và đồng bộ khi người dùng bấm dấu X thoát app
   useEffect(() => {
+    let unlistenClose: (() => void) | null = null;
+
+    if (isTauri()) {
+      import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+        const win = getCurrentWindow();
+        win.onCloseRequested(async () => {
+          dbService.persistImmediate();
+          if (currentUser) {
+            await syncCloudImmediate(currentUser.uid);
+          }
+        }).then((unlisten) => {
+          unlistenClose = unlisten;
+        });
+      });
+    }
+
     const handleBeforeUnload = () => {
       dbService.persistImmediate();
+      if (currentUser) {
+        syncCloudImmediate(currentUser.uid);
+      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (unlistenClose) unlistenClose();
+    };
+  }, [currentUser]);
 
   if (!isDbReady) {
     if (initError) {

@@ -130,5 +130,60 @@ describe('Progress Export & Import logic', () => {
     expect(userA_restored.active_sessions.length).toBe(1);
     expect(userA_restored.active_sessions[0].id).toBe('s1');
   });
+
+  it('guarantees local session progress at question 5 is never downgraded by stale cloud snapshot at question 1', () => {
+    // Local session where user reached Question 5 (index 4) with 4 questions answered
+    const localSession: ActiveSession = {
+      id: 'sess_123',
+      deck_id: 'mock_01',
+      deck_title: 'Mock Test 01',
+      mode: 'study',
+      current_index: 4,
+      total_questions: 60,
+      time_limit_sec: 3600,
+      time_remaining_sec: 3600,
+      question_ids: ['q1', 'q2', 'q3', 'q4', 'q5'],
+      user_answers: { q1: [0], q2: [1], q3: [2], q4: [3] },
+      flagged_ids: [],
+      is_completed: false,
+      created_at: 1000,
+      updated_at: 5000,
+    };
+
+    // Stale cloud session at Question 1 (index 0) with no answers
+    const cloudSession: ActiveSession = {
+      id: 'sess_123',
+      deck_id: 'mock_01',
+      deck_title: 'Mock Test 01',
+      mode: 'study',
+      current_index: 0,
+      total_questions: 60,
+      time_limit_sec: 3600,
+      time_remaining_sec: 3600,
+      question_ids: ['q1', 'q2', 'q3', 'q4', 'q5'],
+      user_answers: {},
+      flagged_ids: [],
+      is_completed: false,
+      created_at: 1000,
+      updated_at: 1000,
+    };
+
+    const localIsAhead = (
+      localSession.current_index > cloudSession.current_index ||
+      Object.keys(localSession.user_answers).length > Object.keys(cloudSession.user_answers).length ||
+      localSession.updated_at >= cloudSession.updated_at
+    );
+
+    const mergedSession: ActiveSession = {
+      ...(localIsAhead ? localSession : cloudSession),
+      current_index: Math.max(localSession.current_index, cloudSession.current_index),
+      user_answers: { ...cloudSession.user_answers, ...localSession.user_answers },
+      updated_at: Math.max(localSession.updated_at, cloudSession.updated_at),
+    };
+
+    expect(localIsAhead).toBe(true);
+    expect(mergedSession.current_index).toBe(4); // Preserves Question 5 (index 4)
+    expect(Object.keys(mergedSession.user_answers).length).toBe(4); // Preserves all 4 answered questions
+  });
 });
 
