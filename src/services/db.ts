@@ -77,6 +77,7 @@ class DatabaseManager {
   private currentUserId: string | null = null;
 
   async init(): Promise<void> {
+    if (this.db) return;
     if (this.initPromise) return this.initPromise;
     this.initPromise = this._doInit();
     return this.initPromise;
@@ -111,18 +112,6 @@ class DatabaseManager {
 
     // Check if initial ingestion is needed
     await this._seedDecksIfEmpty();
-
-    // Reconcile with synchronous localStorage snapshot if available to prevent any data loss
-    if (this.currentUserId && typeof localStorage !== 'undefined') {
-      const cached = localStorage.getItem(`quiz_user_progress_${this.currentUserId}`);
-      if (cached) {
-        try {
-          await this.importProgressJSON(cached, 'merge');
-        } catch (e) {
-          console.warn('Reconcile localStorage snapshot on boot failed:', e);
-        }
-      }
-    }
   }
 
   private _createSchema(): void {
