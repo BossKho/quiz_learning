@@ -24,6 +24,7 @@ import type { User } from 'firebase/auth';
 import { subscribeToAuthState, syncLocalToCloud, pullCloudToLocal } from '@/services/firebaseService';
 import { AuthModal } from '@/components/AuthModal';
 import { ProfileView } from '@/views/ProfileView';
+import { LandingPage } from '@/views/LandingPage';
 
 export function App() {
   // If running inside secondary native popup window, render BusyPopupWindow directly
@@ -36,6 +37,7 @@ export function App() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'study' | 'exam' | 'review' | 'explorer' | 'flashcard' | 'profile'>('dashboard');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [isSyncingCloud, setIsSyncingCloud] = useState(false);
   const [decks, setDecks] = useState<Deck[]>([]);
   const [unfinishedSessions, setUnfinishedSessions] = useState<ActiveSession[]>([]);
@@ -89,16 +91,33 @@ export function App() {
     return () => unsub();
   }, [reloadData]);
 
-  // Subscribe to Firebase Auth state
+  // Subscribe to Firebase Auth state & cleanly isolate user progress
   useEffect(() => {
     const unsub = subscribeToAuthState(async (u) => {
       setCurrentUser(u);
       if (u) {
-        // Automatically sync & merge latest cloud progress when user logs in
+        // Switch user context in SQLite: load user's isolated local progress
+        await dbService.switchUser(u.uid);
+        // Automatically sync & merge latest cloud progress from Firestore
         try {
           await pullCloudToLocal(u.uid, 'merge');
-          await reloadData();
-        } catch {}
+        } catch (err) {
+          console.warn('Auto cloud sync failed:', err);
+        }
+        await reloadData();
+      } else {
+        // User logged out: clear active progress from memory and SQLite
+        await dbService.switchUser(null);
+        setActiveSession(null);
+        setUnfinishedSessions([]);
+        setOverallStats({
+          totalQuestions: 0,
+          mastered: 0,
+          learning: 0,
+          bookmarked: 0,
+          completedSessions: 0,
+        });
+        setCurrentView('dashboard');
       }
     });
     return () => unsub();
@@ -329,6 +348,31 @@ export function App() {
     );
   }
 
+  // If user is not logged in, render the clean, secure Landing Page
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20">
+        <LandingPage
+          onOpenAuthModal={(mode) => {
+            setAuthMode(mode);
+            setAuthModalOpen(true);
+          }}
+        />
+
+        <AuthModal
+          open={authModalOpen}
+          onOpenChange={setAuthModalOpen}
+          initialMode={authMode}
+          onSuccess={async () => {
+            await reloadData();
+          }}
+        />
+
+        <ToastContainer />
+      </div>
+    );
+  }
+
   // Automatic Focus Mode: Header is auto-hidden during study, exam, or flashcard to prevent distractions
   const isFocusArena = currentView === 'study' || currentView === 'exam' || currentView === 'flashcard';
 
@@ -482,6 +526,7 @@ export function App() {
       <AuthModal
         open={authModalOpen}
         onOpenChange={setAuthModalOpen}
+        initialMode={authMode}
         onSuccess={reloadData}
       />
 

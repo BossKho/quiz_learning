@@ -74,6 +74,7 @@ class DatabaseManager {
   private db: Database | null = null;
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
   private initPromise: Promise<void> | null = null;
+  private currentUserId: string | null = null;
 
   async init(): Promise<void> {
     if (this.initPromise) return this.initPromise;
@@ -230,6 +231,50 @@ class DatabaseManager {
         saveDbToIDB(data);
       }
     }, 400);
+  }
+
+  /**
+   * Chuyển đổi tài khoản người dùng đang đăng nhập.
+   * Cách ly hoàn toàn tiến độ (hộp Leitner, bookmark, bài dở dang) giữa các account.
+   */
+  async switchUser(newUserId: string | null): Promise<void> {
+    await this.init();
+    if (!this.db) return;
+
+    // 1. Nếu có tài khoản cũ đang chạy, lưu bản backup tiến độ vào localStorage
+    if (this.currentUserId) {
+      try {
+        const currentData = await this.exportProgressJSON();
+        localStorage.setItem(`quiz_user_progress_${this.currentUserId}`, currentData);
+      } catch (err) {
+        console.warn('Lưu tiến độ người dùng trước thất bại:', err);
+      }
+    }
+
+    // 2. Dọn sạch tiến độ hiện tại trong SQLite để tránh bị lẫn dữ liệu giữa các user
+    this.db.run('DELETE FROM question_stats;');
+    this.db.run('DELETE FROM active_sessions;');
+
+    this.currentUserId = newUserId;
+
+    // 3. Nếu là user hợp lệ, nạp lại tiến độ đã lưu trước đó của user này (nếu có)
+    if (newUserId) {
+      const cached = localStorage.getItem(`quiz_user_progress_${newUserId}`);
+      if (cached) {
+        try {
+          await this.importProgressJSON(cached, 'overwrite');
+        } catch (err) {
+          console.warn('Khôi phục tiến độ cache của tài khoản thất bại:', err);
+        }
+      }
+    }
+
+    // 4. Lưu ngay snapshot mới vào IndexedDB
+    this.persistImmediate();
+  }
+
+  getCurrentUserId(): string | null {
+    return this.currentUserId;
   }
 
   private async _seedDecksIfEmpty(): Promise<void> {

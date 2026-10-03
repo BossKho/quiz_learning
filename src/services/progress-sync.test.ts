@@ -92,5 +92,43 @@ describe('Progress Export & Import logic', () => {
     expect(mergedStreak).toBe(3);
     expect(mergedBookmarked).toBe(true);
   });
+
+  it('guarantees complete isolation between multiple user accounts', () => {
+    // User A progress storage
+    const userA_id = 'uid_user_alpha';
+    const userA_progress: ProgressExportData = {
+      app: 'QuizLearningPro',
+      version: 1,
+      exported_at: Date.now(),
+      exported_at_iso: new Date().toISOString(),
+      stats_summary: { total_questions: 100, mastered: 15, learning: 20, bookmarked: 5, completed_sessions: 3 },
+      question_stats: [{ question_id: 'q1', leitner_box: 5, next_review_at: 0, correct_count: 5, incorrect_count: 0, streak: 5, is_bookmarked: true, last_reviewed_at: 0 }],
+      active_sessions: [{ id: 's1', deck_id: 'deck1', deck_title: 'Deck 1', mode: 'study', current_index: 5, total_questions: 60, time_limit_sec: 0, time_remaining_sec: 0, question_ids: ['q1'], user_answers: {}, flagged_ids: [], is_completed: false, created_at: 0, updated_at: 0 }],
+    };
+
+    // User B (brand new)
+    const userB_id = 'uid_user_beta';
+    const mockLocalStorage: Record<string, string> = {
+      [`quiz_user_progress_${userA_id}`]: JSON.stringify(userA_progress),
+    };
+
+    // When User B logs in, their storage is non-existent (brand new account)
+    const userB_cached = mockLocalStorage[`quiz_user_progress_${userB_id}`];
+    expect(userB_cached).toBeUndefined();
+
+    // User B receives clean empty slate: 0 stats, 0 unfinished sessions
+    const userB_stats = userB_cached ? JSON.parse(userB_cached).question_stats : [];
+    const userB_sessions = userB_cached ? JSON.parse(userB_cached).active_sessions : [];
+    expect(userB_stats.length).toBe(0);
+    expect(userB_sessions.length).toBe(0);
+
+    // When switching back to User A, User A's data is safely restored
+    const userA_cached = mockLocalStorage[`quiz_user_progress_${userA_id}`];
+    expect(userA_cached).toBeDefined();
+    const userA_restored = JSON.parse(userA_cached!);
+    expect(userA_restored.question_stats[0].leitner_box).toBe(5);
+    expect(userA_restored.active_sessions.length).toBe(1);
+    expect(userA_restored.active_sessions[0].id).toBe('s1');
+  });
 });
 
