@@ -6,7 +6,11 @@ import type {
   QuestionStats, 
   ActiveSession, 
   SearchFilter, 
-  SearchResult 
+  SearchResult,
+  CustomQuestionQueryOptions,
+  QuestionScope,
+  SessionMode,
+  ProgressExportData
 } from '@/types/quiz';
 
 // IndexedDB database name and store name for persistence
@@ -113,6 +117,7 @@ class DatabaseManager {
         title TEXT NOT NULL,
         source TEXT,
         total_questions INTEGER NOT NULL DEFAULT 0,
+        category_id TEXT DEFAULT 'fast_track',
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       );
@@ -186,8 +191,32 @@ class DatabaseManager {
           note
         );
       `);
-    } catch (err) {
-      console.warn('FTS4 creation warning:', err);
+    } catch {
+      // FTS4 might already exist
+    }
+
+    // Safe migration: Add category_id to decks if missing from earlier schema versions
+    try {
+      this.db.run(`ALTER TABLE decks ADD COLUMN category_id TEXT DEFAULT 'fast_track';`);
+    } catch {
+      // Column already exists, safe to ignore
+    }
+
+    try {
+      this.db.run(`UPDATE decks SET category_id = 'fast_track' WHERE category_id IS NULL OR category_id = '';`);
+    } catch {
+      // Ignore
+    }
+  }
+
+  private persistImmediate(): void {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = null;
+    }
+    if (this.db) {
+      const data = this.db.export();
+      saveDbToIDB(data);
     }
   }
 
@@ -206,29 +235,40 @@ class DatabaseManager {
   private async _seedDecksIfEmpty(): Promise<void> {
     if (!this.db) return;
 
-    const res = this.db.exec('SELECT COUNT(*) as count FROM decks;');
-    const deckCount = res.length > 0 && res[0].values.length > 0 ? (res[0].values[0][0] as number) : 0;
-    
-    if (deckCount > 0) {
-      return; // Already populated
-    }
-
-    // Ingest all JSON decks bundled in src/data/decks
+    // Ingest all JSON decks bundled in src/data/decks that are not yet in SQLite
     const deckFiles = import.meta.glob<{ default: any }>('../data/decks/*.json', { eager: true });
-    
+    let newlyIngested = false;
+
     for (const path in deckFiles) {
       const deckData = deckFiles[path].default || deckFiles[path];
       if (!deckData || !deckData.questions) continue;
 
       const filename = path.split('/').pop()?.replace('.json', '') || 'Deck';
       const deckId = filename.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+
+      // Check if this deck is already ingested
+      const existing = this.db.exec('SELECT id FROM decks WHERE id = ?;', [deckId]);
+      if (existing.length > 0 && existing[0].values.length > 0) {
+        continue;
+      }
+
+      newlyIngested = true;
       const title = deckData.title || filename;
       const source = deckData.source || filename;
+      let categoryId = deckData.category_id || 'fast_track';
+      if (!deckData.category_id) {
+        const lower = (filename + ' ' + title).toLowerCase();
+        if (lower.includes('japan') || lower.includes('nhật') || lower.includes('jlpt')) {
+          categoryId = 'japanese';
+        } else if (lower.includes('english') || lower.includes('toeic') || lower.includes('ielts')) {
+          categoryId = 'english';
+        }
+      }
       const now = Date.now();
 
       this.db.run(
-        'INSERT OR REPLACE INTO decks (id, title, source, total_questions, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?);',
-        [deckId, title, source, deckData.questions.length, now, now]
+        'INSERT OR REPLACE INTO decks (id, title, source, total_questions, category_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?);',
+        [deckId, title, source, deckData.questions.length, categoryId, now, now]
       );
 
       let position = 0;
@@ -282,7 +322,9 @@ class DatabaseManager {
       }
     }
 
-    this.persistDebounced();
+    if (newlyIngested) {
+      this.persistImmediate();
+    }
   }
 
   async getDecks(): Promise<Deck[]> {
@@ -291,7 +333,7 @@ class DatabaseManager {
 
     const stmt = this.db.prepare(`
       SELECT 
-        d.id, d.title, d.source, d.total_questions, d.created_at, d.updated_at,
+        d.id, d.title, d.source, d.total_questions, d.category_id, d.created_at, d.updated_at,
         COUNT(CASE WHEN qs.leitner_box = 5 THEN 1 END) as mastered_count,
         COUNT(CASE WHEN qs.leitner_box BETWEEN 2 AND 4 THEN 1 END) as learning_count,
         COUNT(CASE WHEN qs.leitner_box = 1 THEN 1 END) as new_count
@@ -312,6 +354,7 @@ class DatabaseManager {
         title: row.title as string,
         source: row.source as string,
         total_questions: row.total_questions as number,
+        category_id: (row.category_id as string) || 'fast_track',
         mastered_count: (row.mastered_count as number) || 0,
         learning_count: (row.learning_count as number) || 0,
         new_count: (row.new_count as number) || 0,
@@ -329,7 +372,7 @@ class DatabaseManager {
 
     const stmt = this.db.prepare(`
       SELECT 
-        d.id, d.title, d.source, d.total_questions, d.created_at, d.updated_at,
+        d.id, d.title, d.source, d.total_questions, d.category_id, d.created_at, d.updated_at,
         COUNT(CASE WHEN qs.leitner_box = 5 THEN 1 END) as mastered_count,
         COUNT(CASE WHEN qs.leitner_box BETWEEN 2 AND 4 THEN 1 END) as learning_count,
         COUNT(CASE WHEN qs.leitner_box = 1 THEN 1 END) as new_count
@@ -349,6 +392,7 @@ class DatabaseManager {
         title: row.title as string,
         source: row.source as string,
         total_questions: row.total_questions as number,
+        category_id: (row.category_id as string) || 'fast_track',
         mastered_count: (row.mastered_count as number) || 0,
         learning_count: (row.learning_count as number) || 0,
         new_count: (row.new_count as number) || 0,
@@ -438,7 +482,10 @@ class DatabaseManager {
       params.push(filter.deck_id);
     }
 
-    if (filter.box !== undefined) {
+    if (filter.min_box !== undefined && filter.max_box !== undefined) {
+      conditions.push('qs.leitner_box BETWEEN ? AND ?');
+      params.push(filter.min_box, filter.max_box);
+    } else if (filter.box !== undefined) {
       conditions.push('qs.leitner_box = ?');
       params.push(filter.box);
     }
@@ -491,6 +538,96 @@ class DatabaseManager {
     selectStmt.free();
 
     return { questions, total };
+  }
+
+  private _buildCustomWhereClause(options: { scope: QuestionScope; deckIds?: string[]; categoryId?: string }): { whereClause: string; params: any[] } {
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    if (options.deckIds && options.deckIds.length > 0) {
+      const placeholders = options.deckIds.map(() => '?').join(',');
+      conditions.push(`q.id IN (SELECT question_id FROM deck_questions WHERE deck_id IN (${placeholders}))`);
+      params.push(...options.deckIds);
+    } else if (options.categoryId && options.categoryId !== 'all') {
+      conditions.push(`q.id IN (SELECT dq.question_id FROM deck_questions dq JOIN decks d ON dq.deck_id = d.id WHERE d.category_id = ?)`);
+      params.push(options.categoryId);
+    }
+
+    switch (options.scope) {
+      case 'new':
+        // Questions that have never been attempted
+        conditions.push('(qs.correct_count = 0 AND qs.incorrect_count = 0)');
+        break;
+      case 'learning_box12':
+        // Questions in Box 1 or Box 2 (struggling or unmastered)
+        conditions.push('(qs.leitner_box IN (1, 2))');
+        break;
+      case 'bookmarked':
+        conditions.push('qs.is_bookmarked = 1');
+        break;
+      case 'all':
+      default:
+        // No extra condition
+        break;
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    return { whereClause, params };
+  }
+
+  async getCustomQuestions(options: CustomQuestionQueryOptions): Promise<Question[]> {
+    await this.init();
+    if (!this.db) return [];
+
+    const { whereClause, params } = this._buildCustomWhereClause(options);
+    const limit = Math.max(1, options.count || 15);
+    const orderBy = options.shuffle !== false ? 'ORDER BY RANDOM()' : 'ORDER BY q.id ASC';
+
+    const sql = `
+      SELECT DISTINCT
+        q.id, q.deck_id, q.type, q.question, q.options_json, q.answer_json,
+        q.explanation, q.note, q.answer_source, q.shuffle_options,
+        q.vi_question, q.vi_options_json,
+        qs.leitner_box, qs.next_review_at, qs.correct_count, qs.incorrect_count,
+        qs.streak, qs.is_bookmarked, qs.last_reviewed_at
+      FROM questions q
+      LEFT JOIN question_stats qs ON q.id = qs.question_id
+      ${whereClause}
+      ${orderBy}
+      LIMIT ?;
+    `;
+
+    const stmt = this.db.prepare(sql);
+    stmt.bind([...params, limit]);
+
+    const questions: Question[] = [];
+    while (stmt.step()) {
+      questions.push(this._mapRowToQuestion(stmt.getAsObject()));
+    }
+    stmt.free();
+    return questions;
+  }
+
+  async countAvailableQuestions(options: Omit<CustomQuestionQueryOptions, 'count'>): Promise<number> {
+    await this.init();
+    if (!this.db) return 0;
+
+    const { whereClause, params } = this._buildCustomWhereClause(options);
+    const sql = `
+      SELECT COUNT(DISTINCT q.id) as count
+      FROM questions q
+      LEFT JOIN question_stats qs ON q.id = qs.question_id
+      ${whereClause};
+    `;
+
+    const stmt = this.db.prepare(sql);
+    stmt.bind(params);
+    let count = 0;
+    if (stmt.step()) {
+      count = (stmt.getAsObject().count as number) || 0;
+    }
+    stmt.free();
+    return count;
   }
 
   async updateQuestionStats(questionId: string, isCorrect: boolean): Promise<QuestionStats> {
@@ -623,15 +760,54 @@ class DatabaseManager {
     return sessions;
   }
 
-  async deleteSession(sessionId: string): Promise<void> {
+  async deleteSession(sessionId: string, resetStats: boolean = true): Promise<void> {
     await this.init();
     if (!this.db) return;
 
+    if (resetStats) {
+      const session = await this.getActiveSession(sessionId);
+      if (session) {
+        // Reset Leitner stats for all questions answered in this cancelled session
+        const answeredQIds = Object.keys(session.user_answers || {});
+        for (const qId of answeredQIds) {
+          this.db.run('DELETE FROM question_stats WHERE question_id = ?;', [qId]);
+        }
+      }
+    }
+
     this.db.run('DELETE FROM active_sessions WHERE id = ?;', [sessionId]);
-    this.persistDebounced();
+    this.persistImmediate();
   }
 
-  async getOverallStats(): Promise<{
+  async resetDeckProgress(deckId: string): Promise<void> {
+    await this.init();
+    if (!this.db) return;
+
+    if (deckId === '_all' || deckId === 'all') {
+      this.db.run('DELETE FROM question_stats;');
+      this.db.run('DELETE FROM active_sessions;');
+    } else {
+      this.db.run(`
+        DELETE FROM question_stats 
+        WHERE question_id IN (
+          SELECT question_id FROM deck_questions WHERE deck_id = ?
+        );
+      `, [deckId]);
+      this.db.run('DELETE FROM active_sessions WHERE deck_id = ?;', [deckId]);
+    }
+    this.persistImmediate();
+  }
+
+  async resetAllProgress(): Promise<void> {
+    await this.init();
+    if (!this.db) return;
+
+    this.db.run('DELETE FROM question_stats;');
+    this.db.run('DELETE FROM active_sessions;');
+    this.persistImmediate();
+  }
+
+  async getOverallStats(categoryId?: string): Promise<{
     totalQuestions: number;
     mastered: number;
     learning: number;
@@ -643,15 +819,32 @@ class DatabaseManager {
       return { totalQuestions: 0, mastered: 0, learning: 0, bookmarked: 0, completedSessions: 0 };
     }
 
-    const qRes = this.db.exec(`
-      SELECT 
-        COUNT(*) as total,
-        COUNT(CASE WHEN qs.leitner_box = 5 THEN 1 END) as mastered,
-        COUNT(CASE WHEN qs.leitner_box BETWEEN 2 AND 4 THEN 1 END) as learning,
-        COUNT(CASE WHEN qs.is_bookmarked = 1 THEN 1 END) as bookmarked
-      FROM questions q
-      LEFT JOIN question_stats qs ON q.id = qs.question_id;
-    `);
+    let qRes: any[];
+    if (categoryId && categoryId !== 'all') {
+      const escaped = categoryId.replace(/'/g, "''");
+      qRes = this.db.exec(`
+        SELECT 
+          COUNT(DISTINCT q.id) as total,
+          COUNT(DISTINCT CASE WHEN qs.leitner_box = 5 THEN q.id END) as mastered,
+          COUNT(DISTINCT CASE WHEN qs.leitner_box BETWEEN 2 AND 4 THEN q.id END) as learning,
+          COUNT(DISTINCT CASE WHEN qs.is_bookmarked = 1 THEN q.id END) as bookmarked
+        FROM questions q
+        JOIN deck_questions dq ON q.id = dq.question_id
+        JOIN decks d ON dq.deck_id = d.id
+        LEFT JOIN question_stats qs ON q.id = qs.question_id
+        WHERE d.category_id = '${escaped}';
+      `);
+    } else {
+      qRes = this.db.exec(`
+        SELECT 
+          COUNT(*) as total,
+          COUNT(CASE WHEN qs.leitner_box = 5 THEN 1 END) as mastered,
+          COUNT(CASE WHEN qs.leitner_box BETWEEN 2 AND 4 THEN 1 END) as learning,
+          COUNT(CASE WHEN qs.is_bookmarked = 1 THEN 1 END) as bookmarked
+        FROM questions q
+        LEFT JOIN question_stats qs ON q.id = qs.question_id;
+      `);
+    }
 
     const sRes = this.db.exec(`
       SELECT COUNT(*) as completed_count FROM active_sessions WHERE is_completed = 1;
@@ -667,6 +860,270 @@ class DatabaseManager {
       bookmarked: Number(qRow[3]) || 0,
       completedSessions: Number(sRow[0]) || 0,
     };
+  }
+
+  async importCustomDeck(
+    deckData: any,
+    targetCategoryId: string = 'fast_track'
+  ): Promise<{ id: string; title: string; count: number }> {
+    await this.init();
+    if (!this.db) throw new Error('Database not ready');
+
+    if (!deckData || typeof deckData !== 'object') {
+      throw new Error('Dữ liệu không phải là đối tượng JSON hợp lệ.');
+    }
+
+    if (!deckData.questions || !Array.isArray(deckData.questions) || deckData.questions.length === 0) {
+      throw new Error('Bộ đề không có danh sách câu hỏi hợp lệ (thiếu mảng questions).');
+    }
+
+    const title = String(deckData.title || 'Bộ đề mới').trim();
+    const source = String(deckData.source || 'Nhập từ file JSON').trim();
+    const categoryId = String(deckData.category_id || targetCategoryId || 'fast_track').trim().toLowerCase();
+    
+    // Generate clean unique deck ID
+    const baseId = title.toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(0, 30) || 'deck';
+    const deckId = `custom_${baseId}_${Date.now()}`;
+    const now = Date.now();
+
+    this.db.run(
+      'INSERT OR REPLACE INTO decks (id, title, source, total_questions, category_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?);',
+      [deckId, title, source, deckData.questions.length, categoryId, now, now]
+    );
+
+    let position = 0;
+    for (const q of deckData.questions) {
+      position++;
+      const qId = q.id ? String(q.id) : `q_${deckId}_${position}`;
+
+      this.db.run(
+        `INSERT OR REPLACE INTO questions (
+          id, deck_id, type, question, options_json, answer_json, 
+          explanation, note, answer_source, shuffle_options, 
+          vi_question, vi_options_json, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        [
+          qId,
+          deckId,
+          q.type || 'single',
+          q.question || '',
+          JSON.stringify(q.options || []),
+          JSON.stringify(q.answer || [0]),
+          q.explanation || '',
+          q.note || '',
+          q.answer_source || 'user_import',
+          q.shuffle_options !== false ? 1 : 0,
+          q.vi?.question || '',
+          JSON.stringify(q.vi?.options || []),
+          now,
+        ]
+      );
+
+      this.db.run(
+        'INSERT OR REPLACE INTO deck_questions (deck_id, question_id, position) VALUES (?, ?, ?);',
+        [deckId, qId, position]
+      );
+
+      this.db.run(
+        'INSERT OR IGNORE INTO question_stats (question_id, leitner_box, next_review_at, correct_count, incorrect_count, streak, is_bookmarked, last_reviewed_at) VALUES (?, 1, 0, 0, 0, 0, 0, 0);',
+        [qId]
+      );
+
+      try {
+        this.db.run(
+          'INSERT INTO questions_fts (question_id, question, vi_question, explanation, note) VALUES (?, ?, ?, ?, ?);',
+          [qId, q.question || '', q.vi?.question || '', q.explanation || '', q.note || '']
+        );
+      } catch {
+        // ignore duplicate FTS
+      }
+    }
+
+    this.persistImmediate();
+    return { id: deckId, title, count: deckData.questions.length };
+  }
+
+  async deleteDeck(deckId: string): Promise<void> {
+    await this.init();
+    if (!this.db) return;
+
+    this.db.run('DELETE FROM deck_questions WHERE deck_id = ?;', [deckId]);
+    this.db.run('DELETE FROM questions WHERE deck_id = ?;', [deckId]);
+    this.db.run('DELETE FROM active_sessions WHERE deck_id = ?;', [deckId]);
+    this.db.run('DELETE FROM decks WHERE id = ?;', [deckId]);
+    this.persistImmediate();
+  }
+
+  async exportProgressJSON(): Promise<string> {
+    await this.init();
+    if (!this.db) throw new Error('Database not initialized');
+
+    // 1. Get all question stats
+    const statsStmt = this.db.prepare(`
+      SELECT question_id, leitner_box, next_review_at, correct_count, 
+             incorrect_count, streak, is_bookmarked, last_reviewed_at
+      FROM question_stats;
+    `);
+    const questionStats: QuestionStats[] = [];
+    while (statsStmt.step()) {
+      const row = statsStmt.getAsObject();
+      questionStats.push({
+        question_id: row.question_id as string,
+        leitner_box: row.leitner_box as number,
+        next_review_at: row.next_review_at as number,
+        correct_count: row.correct_count as number,
+        incorrect_count: row.incorrect_count as number,
+        streak: row.streak as number,
+        is_bookmarked: Boolean(row.is_bookmarked),
+        last_reviewed_at: row.last_reviewed_at as number,
+      });
+    }
+    statsStmt.free();
+
+    // 2. Get active sessions
+    const sessions = await this.getUnfinishedSessions();
+
+    // 3. Overall stats
+    const overallStats = await this.getOverallStats();
+
+    const exportData: ProgressExportData = {
+      app: 'QuizLearningPro',
+      version: 1,
+      exported_at: Date.now(),
+      exported_at_iso: new Date().toISOString(),
+      stats_summary: {
+        total_questions: overallStats.totalQuestions,
+        mastered: overallStats.mastered,
+        learning: overallStats.learning,
+        bookmarked: overallStats.bookmarked,
+        completed_sessions: overallStats.completedSessions,
+      },
+      question_stats: questionStats,
+      active_sessions: sessions,
+    };
+
+    return JSON.stringify(exportData, null, 2);
+  }
+
+  async importProgressJSON(
+    jsonString: string,
+    mergeMode: 'overwrite' | 'merge' = 'merge'
+  ): Promise<{ importedStats: number; importedSessions: number }> {
+    await this.init();
+    if (!this.db) throw new Error('Database not initialized');
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(jsonString);
+    } catch {
+      throw new Error('Dữ liệu JSON không hợp lệ.');
+    }
+
+    const questionStats: any[] = parsed.question_stats || [];
+    const activeSessions: any[] = parsed.active_sessions || [];
+
+    if (!Array.isArray(questionStats)) {
+      throw new Error('Định dạng file không đúng: Thiếu danh sách question_stats.');
+    }
+
+    if (mergeMode === 'overwrite') {
+      // Clear current stats and sessions before inserting
+      this.db.run('DELETE FROM question_stats;');
+      this.db.run('DELETE FROM active_sessions;');
+    }
+
+    let importedStats = 0;
+    for (const stat of questionStats) {
+      if (!stat.question_id) continue;
+      importedStats++;
+
+      if (mergeMode === 'merge') {
+        const existing = await this.getQuestion(stat.question_id);
+        const oldStats = existing?.stats;
+
+        const leitner_box = Math.max(oldStats?.leitner_box || 1, stat.leitner_box || 1);
+        const correct_count = (oldStats?.correct_count || 0) + (stat.correct_count || 0);
+        const incorrect_count = (oldStats?.incorrect_count || 0) + (stat.incorrect_count || 0);
+        const streak = Math.max(oldStats?.streak || 0, stat.streak || 0);
+        const is_bookmarked = (oldStats?.is_bookmarked || stat.is_bookmarked) ? 1 : 0;
+        const last_reviewed_at = Math.max(oldStats?.last_reviewed_at || 0, stat.last_reviewed_at || 0);
+        const next_review_at = Math.max(oldStats?.next_review_at || 0, stat.next_review_at || 0);
+
+        this.db.run(`
+          INSERT INTO question_stats (
+            question_id, leitner_box, next_review_at, correct_count,
+            incorrect_count, streak, is_bookmarked, last_reviewed_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(question_id) DO UPDATE SET
+            leitner_box = excluded.leitner_box,
+            next_review_at = excluded.next_review_at,
+            correct_count = excluded.correct_count,
+            incorrect_count = excluded.incorrect_count,
+            streak = excluded.streak,
+            is_bookmarked = excluded.is_bookmarked,
+            last_reviewed_at = excluded.last_reviewed_at;
+        `, [
+          stat.question_id,
+          leitner_box,
+          next_review_at,
+          correct_count,
+          incorrect_count,
+          streak,
+          is_bookmarked,
+          last_reviewed_at,
+        ]);
+      } else {
+        // Overwrite
+        this.db.run(`
+          INSERT OR REPLACE INTO question_stats (
+            question_id, leitner_box, next_review_at, correct_count,
+            incorrect_count, streak, is_bookmarked, last_reviewed_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        `, [
+          stat.question_id,
+          stat.leitner_box || 1,
+          stat.next_review_at || 0,
+          stat.correct_count || 0,
+          stat.incorrect_count || 0,
+          stat.streak || 0,
+          stat.is_bookmarked ? 1 : 0,
+          stat.last_reviewed_at || 0,
+        ]);
+      }
+    }
+
+    let importedSessions = 0;
+    if (Array.isArray(activeSessions)) {
+      for (const s of activeSessions) {
+        if (!s.id) continue;
+        importedSessions++;
+        await this.saveSession({
+          id: s.id,
+          deck_id: s.deck_id || 'unknown',
+          deck_title: s.deck_title || 'Untitled',
+          mode: s.mode || 'study',
+          current_index: s.current_index || 0,
+          total_questions: s.total_questions || 0,
+          time_limit_sec: s.time_limit_sec || 0,
+          time_remaining_sec: s.time_remaining_sec || 0,
+          question_ids: s.question_ids || [],
+          user_answers: s.user_answers || {},
+          flagged_ids: s.flagged_ids || [],
+          is_completed: Boolean(s.is_completed),
+          score: s.score || 0,
+          created_at: s.created_at || Date.now(),
+          updated_at: s.updated_at || Date.now(),
+        });
+      }
+    }
+
+    // Immediately persist binary snapshot to IndexedDB
+    if (this.db) {
+      const data = this.db.export();
+      await saveDbToIDB(data);
+    }
+
+    return { importedStats, importedSessions };
   }
 
   private _mapRowToQuestion(row: Record<string, any>): Question {
@@ -703,7 +1160,7 @@ class DatabaseManager {
       id: row.id as string,
       deck_id: row.deck_id as string,
       deck_title: row.deck_title as string,
-      mode: row.mode as 'study' | 'exam',
+      mode: (row.mode as SessionMode) || 'study',
       current_index: row.current_index as number,
       total_questions: row.total_questions as number,
       time_limit_sec: (row.time_limit_sec as number) || 0,

@@ -13,7 +13,6 @@ import {
   Search, 
   Home, 
   HelpCircle, 
-  Maximize, 
   GraduationCap
 } from 'lucide-react';
 import type { Deck } from '@/types/quiz';
@@ -24,7 +23,6 @@ interface CommandPaletteProps {
   decks: Deck[];
   onSelectDeck: (deck: Deck, mode: 'study' | 'exam') => void;
   onNavigate: (view: string) => void;
-  onToggleZenMode: () => void;
   onOpenShortcutsHelp: () => void;
 }
 
@@ -34,7 +32,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   decks,
   onSelectDeck,
   onNavigate,
-  onToggleZenMode,
   onOpenShortcutsHelp,
 }) => {
   return (
@@ -63,16 +60,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             <Search className="size-4" />
             <span>Question Search & Leitner Explorer</span>
             <CommandShortcut>S</CommandShortcut>
-          </CommandItem>
-          <CommandItem
-            onSelect={() => {
-              onToggleZenMode();
-              onOpenChange(false);
-            }}
-          >
-            <Maximize className="size-4" />
-            <span>Toggle Zen Focus Mode</span>
-            <CommandShortcut>Ctrl+Shift+F</CommandShortcut>
           </CommandItem>
           <CommandItem
             onSelect={() => {

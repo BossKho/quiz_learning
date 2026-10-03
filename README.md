@@ -1,6 +1,6 @@
-# Quiz Learning Pro — Enterprise Certification Practice Platform
+# Quiz Learning Pro — Enterprise Certification & Learning Platform
 
-A high-performance, keyboard-driven desktop learning platform built according to **ECC (Everything Claude Code)** engineering discipline and **shadcn/ui** design system.
+A high-performance, keyboard-driven desktop learning platform built according to **ECC (Everything Claude Code)** engineering discipline and modern design system.
 
 ---
 
@@ -15,9 +15,9 @@ A high-performance, keyboard-driven desktop learning platform built according to
 - **Exam Arena (Chế độ Thi mô phỏng thực chiến)**:
   - Strict countdown timer (60 minutes default, configurable).
   - Zero immediate answers revealed during the exam.
-  - **Question Matrix Grid**: 60-box visual status map (Answered, Unanswered, Flagged `[F]`, Current).
+  - **Question Matrix Grid**: Visual status map (Answered, Unanswered, Flagged `[F]`, Current).
   - Pre-submission audit dialog warning of unanswered items.
-  - Detailed Post-Exam Review with Pass/Fail classification (70% passing threshold), score breakdown, and filters for incorrect answers.
+  - Detailed Post-Exam Review with Pass/Fail classification, score breakdown, and filters for incorrect answers.
 
 ### 2. High-Density Desktop UX & Keyboard-First Navigation
 Designed for mouse-free power users:
@@ -28,38 +28,48 @@ Designed for mouse-free power users:
 - `E`: Toggle explanation and note drawer (`[E]`)
 - `F`: Flag question for review in Exam Mode (`[F]`)
 - `Ctrl + K`: Open Command Palette for fast navigation between decks and actions
-- `Ctrl + Shift + F`: Toggle Zen Focus Mode
 - `Esc`: Return to Dashboard / Exit
-*(All single-key shortcuts are automatically suppressed when typing in input fields).*
 
-### 3. Persistent SQLite & Full-Text Search (FTS4)
-- Source of Truth is local SQLite backed by IndexedDB binary snapshotting.
-- Scales from current dataset to 50,000+ questions without React memory bloat.
-- Virtual Table `questions_fts` indexes English questions, Vietnamese questions, explanations, and notes for instantaneous sub-millisecond search.
-- Filter search results by Deck, Leitner Box, or Bookmarked status.
+### 3. Busy Mode (Chế độ Người bận rộn)
+- A non-intrusive desktop popup appearing above the taskbar at custom intervals (e.g. every 1, 3, 5, 10 minutes).
+- Answer single questions directly on screen, with bilingual translation toggle (`[T]`), 10-second auto-close countdown, and instant Leitner Box progression.
+- Strictly isolated multi-window architecture with background timer synchronization.
 
-### 4. 14 Pre-Bundled Test Decks
-- Mock Test 01 to Mock Test 06 (60 questions each)
-- Đề 1 to Đề 7 (60 questions each)
-- Master Question Bank (`_all.json`, 369 deduplicated questions)
+### 4. User System & Cloud Sync (Local-First)
+- **Account & Authentication**: Email & Password sign in, sign up, and password recovery.
+- **Gamification Engine**: XP points, 99 Levels, dynamic badges showcase, and streak flames 🔥.
+- **Activity Heatmap**: GitHub-style matrix visualizing daily learning consistency across 52 weeks.
+- **Local-First Architecture**: 0ms offline response backed by local SQLite. Changes automatically sync to the Cloud when online.
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### Option 1: One-Click Launch (Windows)
-Double click `start.bat` in the project root.
-
-### Option 2: Command Line
+### 1. Setup Environment
+Copy the example environment file:
 ```bash
-npm run dev
+cp .env.example .env
 ```
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Fill in your Cloud configuration parameters in `.env`.
+
+### 2. Install Dependencies
+```bash
+npm install
+```
+
+### 3. Development Mode
+```bash
+# Web browser dev server
+npm run dev
+
+# Or launch desktop application
+npm run tauri dev
+```
 
 ---
 
-## 🧪 Testing & Verification
-Run the automated test suite powered by Vitest:
+## 🧪 Testing & Quality Assurance
+Run the automated test suite powered by Vitest (16 unit tests):
 ```bash
 npm test
 ```
@@ -69,10 +79,18 @@ Build production bundle:
 npm run build
 ```
 
+Compile standalone desktop release (`QuizLearningPro.exe`):
+```bash
+cd src-tauri
+cargo build --release
+```
+
 ---
 
 ## 🏗️ Architecture & Tech Stack
-- **Framework**: React 19 + TypeScript + Vite + Tailwind CSS v4
-- **Component System**: shadcn/ui + Radix UI + Lucide Icons
+- **Framework**: React 19 + TypeScript + Vite + Tailwind CSS
+- **Component System**: Radix UI + Lucide Icons
 - **Database & Search**: SQLite (sql.js WASM + FTS4 Virtual Table)
 - **Desktop Shell**: Tauri 2 (`src-tauri`) with Windows WebView2
+- **Cloud Backend**: Google Firebase Auth & Cloud Firestore (Local-First Offline Persistence)
+

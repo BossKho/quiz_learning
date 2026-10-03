@@ -1,0 +1,709 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { 
+  ArrowLeft, 
+  RotateCw, 
+  Check, 
+  X, 
+  Languages, 
+  Bookmark, 
+  Trophy, 
+  CheckCircle2, 
+  XCircle, 
+  RotateCcw,
+  HelpCircle,
+  AlertCircle,
+  Sun,
+  Moon
+} from 'lucide-react';
+import type { Question, QuestionStats, ActiveSession } from '@/types/quiz';
+import { dbService } from '@/services/db';
+import { useTheme } from '@/lib/theme';
+
+interface FlashcardArenaProps {
+  deckTitle: string;
+  questions: Question[];
+  onExit: () => void;
+  initialSession?: ActiveSession;
+}
+
+export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
+  deckTitle,
+  questions: initialQuestions,
+  onExit,
+  initialSession,
+}) => {
+  const [activeQuestions, setActiveQuestions] = useState<Question[]>(initialQuestions);
+  const [currentIndex, setCurrentIndex] = useState(initialSession?.current_index || 0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [showVi, setShowVi] = useState(false);
+  const [reviewHistory, setReviewHistory] = useState<Record<string, 'mastered' | 'again'>>(() => {
+    // If resuming from session, restore answers if any
+    const restored: Record<string, 'mastered' | 'again'> = {};
+    if (initialSession?.user_answers) {
+      for (const [qId, val] of Object.entries(initialSession.user_answers)) {
+        restored[qId] = val[0] === 1 ? 'mastered' : 'again';
+      }
+    }
+    return restored;
+  });
+  const [localStats, setLocalStats] = useState<Record<string, QuestionStats>>({});
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
+
+  // Generate or maintain session id for progress tracking
+  const [sessionId] = useState<string>(() => initialSession?.id || `flashcard_${Date.now()}`);
+
+  const currentQ = activeQuestions[currentIndex];
+  const qId = currentQ?.id;
+  const effectiveStats = qId ? localStats[qId] || currentQ?.stats : undefined;
+  const isBookmarked = Boolean(effectiveStats?.is_bookmarked);
+
+  // Counts
+  const totalCount = activeQuestions.length;
+  const masteredCount = Object.values(reviewHistory).filter((v) => v === 'mastered').length;
+  const againCount = Object.values(reviewHistory).filter((v) => v === 'again').length;
+  const progressPercent = totalCount > 0 ? Math.round((currentIndex / totalCount) * 100) : 0;
+
+  // Save session progress in background
+  const persistSessionProgress = useCallback(async (idx: number, history: Record<string, 'mastered' | 'again'>, completed: boolean) => {
+    try {
+      const userAnswersFormatted: Record<string, number[]> = {};
+      for (const [id, val] of Object.entries(history)) {
+        userAnswersFormatted[id] = [val === 'mastered' ? 1 : 0];
+      }
+
+      const sessionData: ActiveSession = {
+        id: sessionId,
+        deck_id: activeQuestions[0]?.deck_id || 'flashcard_deck',
+        deck_title: deckTitle,
+        mode: 'flashcard',
+        current_index: idx,
+        total_questions: activeQuestions.length,
+        time_limit_sec: 0,
+        time_remaining_sec: 0,
+        question_ids: activeQuestions.map((q) => q.id),
+        user_answers: userAnswersFormatted,
+        flagged_ids: [],
+        is_completed: completed,
+        score: masteredCount,
+        created_at: initialSession?.created_at || Date.now(),
+        updated_at: Date.now(),
+      };
+      await dbService.saveSession(sessionData);
+    } catch (err) {
+      console.error('Failed to save flashcard session:', err);
+    }
+  }, [sessionId, activeQuestions, deckTitle, masteredCount, initialSession]);
+
+  // Leitner Box labels
+  const getBoxBadge = (box?: number) => {
+    const b = box || 1;
+    switch (b) {
+      case 1:
+        return <Badge variant="outline" className="text-[10.5px] border-red-500/40 text-red-400 font-bold bg-red-500/5">Hộp 1 · Mới / Hay sai</Badge>;
+      case 2:
+        return <Badge variant="outline" className="text-[10.5px] border-amber-500/40 text-amber-400 font-bold bg-amber-500/5">Hộp 2 · Đang ôn luyện</Badge>;
+      case 3:
+        return <Badge variant="outline" className="text-[10.5px] border-blue-500/40 text-blue-400 font-bold bg-blue-500/5">Hộp 3 · Quen thuộc</Badge>;
+      case 4:
+        return <Badge variant="outline" className="text-[10.5px] border-indigo-500/40 text-indigo-400 font-bold bg-indigo-500/5">Hộp 4 · Thành thạo</Badge>;
+      case 5:
+        return <Badge variant="outline" className="text-[10.5px] border-emerald-500/40 text-emerald-400 font-bold bg-emerald-500/5">Hộp 5 · Thuần thục</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  // Flip toggle
+  const handleFlip = useCallback(() => {
+    setIsFlipped((prev) => !prev);
+  }, []);
+
+  // Rate question: Again (Chưa nhớ) vs Mastered (Đã thuộc)
+  const handleRate = useCallback(async (rating: 'again' | 'mastered') => {
+    if (!currentQ || !qId) return;
+
+    const isCorrect = rating === 'mastered';
+    const newHistory = { ...reviewHistory, [qId]: rating };
+    setReviewHistory(newHistory);
+
+    // Update SQLite in background
+    try {
+      const updated = await dbService.updateQuestionStats(qId, isCorrect);
+      setLocalStats((prev) => ({ ...prev, [qId]: updated }));
+    } catch (err) {
+      console.error('Failed to update stats in flashcard mode:', err);
+    }
+
+    // Advance to next card or complete
+    if (currentIndex + 1 < activeQuestions.length) {
+      const nextIdx = currentIndex + 1;
+      setIsFlipped(false);
+      setCurrentIndex(nextIdx);
+      persistSessionProgress(nextIdx, newHistory, false);
+    } else {
+      setIsCompleted(true);
+      persistSessionProgress(activeQuestions.length, newHistory, true);
+    }
+  }, [currentQ, qId, currentIndex, activeQuestions.length, reviewHistory, persistSessionProgress]);
+
+  // Toggle Bookmark
+  const handleToggleBookmark = useCallback(async () => {
+    if (!qId) return;
+    try {
+      const newStatus = await dbService.toggleBookmark(qId);
+      setLocalStats((prev) => {
+        const existing = prev[qId] || currentQ?.stats || {
+          question_id: qId,
+          leitner_box: 1,
+          next_review_at: 0,
+          correct_count: 0,
+          incorrect_count: 0,
+          streak: 0,
+          is_bookmarked: false,
+          last_reviewed_at: 0,
+        };
+        return {
+          ...prev,
+          [qId]: { ...existing, is_bookmarked: newStatus },
+        };
+      });
+    } catch (err) {
+      console.error('Failed to toggle bookmark:', err);
+    }
+  }, [qId, currentQ]);
+
+  // Handle Exit Request
+  const handleRequestExit = useCallback(() => {
+    if (currentIndex > 0 && !isCompleted) {
+      setExitConfirmOpen(true);
+    } else {
+      onExit();
+    }
+  }, [currentIndex, isCompleted, onExit]);
+
+  // Confirm Exit
+  const handleConfirmExit = async () => {
+    await persistSessionProgress(currentIndex, reviewHistory, false);
+    setExitConfirmOpen(false);
+    onExit();
+  };
+
+  // Restart only missed questions
+  const handleReviewMistakesOnly = () => {
+    const missedQuestions = activeQuestions.filter((q) => reviewHistory[q.id] === 'again');
+    if (missedQuestions.length === 0) return;
+    setActiveQuestions(missedQuestions);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setReviewHistory({});
+    setIsCompleted(false);
+  };
+
+  // Restart all questions in this session
+  const handleRestartAll = () => {
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setReviewHistory({});
+    setIsCompleted(false);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
+
+      if (exitConfirmOpen) {
+        if (e.key === 'Escape') setExitConfirmOpen(false);
+        return;
+      }
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        handleFlip();
+      } else if (e.key === 'ArrowLeft' || e.key === '1') {
+        e.preventDefault();
+        handleRate('again');
+      } else if (e.key === 'ArrowRight' || e.key === '2') {
+        e.preventDefault();
+        handleRate('mastered');
+      } else if (e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        setShowVi((prev) => !prev);
+      } else if (e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        handleToggleBookmark();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        handleRequestExit();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleFlip, handleRate, handleToggleBookmark, handleRequestExit, exitConfirmOpen]);
+
+  // If completed summary screen
+  if (isCompleted) {
+    const totalReviewed = activeQuestions.length;
+    const ratePercent = totalReviewed > 0 ? Math.round((masteredCount / totalReviewed) * 100) : 0;
+    const hasMistakes = againCount > 0;
+
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 max-w-2xl mx-auto animate-in fade-in duration-300">
+        <Card className="w-full p-6 sm:p-8 bg-card border-border/80 shadow-2xl rounded-3xl text-center space-y-6">
+          <div className="size-16 rounded-2xl bg-primary/10 text-primary mx-auto flex items-center justify-center shadow-xs">
+            <Trophy className="size-8 text-amber-500 fill-amber-500/20" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-bold">
+              Hoàn thành phiên lật thẻ
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-foreground">
+              Tổng kết Flashcard
+            </h2>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">
+              Bạn đã lướt qua tất cả <strong>{totalReviewed}</strong> câu hỏi trong phiên này. Thứ hạng Hộp Leitner đã được cập nhật trực tiếp vào hệ thống.
+            </p>
+          </div>
+
+          {/* Stats Badges */}
+          <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-muted/40 border border-border/60">
+            <div className="space-y-1">
+              <div className="text-xl sm:text-2xl font-black text-foreground font-mono">{ratePercent}%</div>
+              <div className="text-[11px] text-muted-foreground">Tỷ lệ thuộc bài</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xl sm:text-2xl font-black text-emerald-400 font-mono flex items-center justify-center gap-1">
+                <CheckCircle2 className="size-4.5" /> {masteredCount}
+              </div>
+              <div className="text-[11px] text-muted-foreground">Đã thuộc (+1 Box)</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xl sm:text-2xl font-black text-red-400 font-mono flex items-center justify-center gap-1">
+                <XCircle className="size-4.5" /> {againCount}
+              </div>
+              <div className="text-[11px] text-muted-foreground">Cần ôn lại (Box 1)</div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            {hasMistakes && (
+              <Button
+                variant="default"
+                onClick={handleReviewMistakesOnly}
+                className="flex-1 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer active:scale-95 shadow-md flex items-center justify-center gap-2"
+              >
+                <RotateCcw className="size-4" />
+                Ôn ngay {againCount} câu chưa nhớ
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              onClick={handleRestartAll}
+              className="flex-1 h-11 rounded-xl border-border/80 text-foreground font-semibold cursor-pointer active:scale-95"
+            >
+              <RotateCw className="size-4 mr-2" />
+              Luyện lại toàn bộ ({totalCount} câu)
+            </Button>
+
+            <Button
+              variant="secondary"
+              onClick={onExit}
+              className="flex-1 h-11 rounded-xl font-bold cursor-pointer active:scale-95"
+            >
+              <ArrowLeft className="size-4 mr-2" />
+              Về Trang chủ
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Answer indices check helper
+  const isCorrectOption = (idx: number) => {
+    return currentQ?.answer.includes(idx) ?? false;
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col justify-between p-3 sm:p-6 max-w-5xl mx-auto selection:bg-primary/20 select-none">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-border/50">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRequestExit}
+            className="h-8.5 px-3 rounded-xl border border-border/60 hover:bg-muted text-xs font-semibold cursor-pointer active:scale-95 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-3.5 mr-1" />
+            <span className="hidden sm:inline">Trang chủ</span> (Esc)
+          </Button>
+
+          <span className="text-xs font-bold text-foreground truncate max-w-[180px] sm:max-w-xs">
+            {deckTitle}
+          </span>
+        </div>
+
+        {/* Card Counter & Score tally */}
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="font-mono text-xs px-2.5 py-1 font-bold">
+            Thẻ {currentIndex + 1} / {totalCount}
+          </Badge>
+
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-mono">
+            <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/25">
+              ✓ {masteredCount}
+            </span>
+            <span className="px-2.5 py-0.5 rounded-md bg-red-500/10 text-red-400 font-bold border border-red-500/25">
+              ✗ {againCount}
+            </span>
+          </div>
+
+          {/* Toggle Bilingual */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowVi((prev) => !prev)}
+            className={`h-8.5 px-2.5 rounded-xl border text-xs font-semibold cursor-pointer active:scale-95 transition-all ${
+              showVi
+                ? 'bg-blue-500/15 border-blue-500 text-blue-400 font-bold'
+                : 'border-border/70 text-muted-foreground'
+            }`}
+            title="Nhấn phím T để bật/tắt dịch tiếng Việt"
+          >
+            <Languages className="size-3.5 sm:mr-1" />
+            <span className="hidden sm:inline">Tiếng Việt</span> (T)
+          </Button>
+
+          {/* Bookmark */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleToggleBookmark}
+            className={`size-8.5 rounded-xl border cursor-pointer active:scale-95 transition-all ${
+              isBookmarked
+                ? 'border-amber-500/60 bg-amber-500/15 text-amber-400'
+                : 'border-border/60 text-muted-foreground hover:text-foreground'
+            }`}
+            title="Đánh dấu câu hỏi (Phím B)"
+          >
+            <Bookmark className={`size-4 ${isBookmarked ? 'fill-current' : ''}`} />
+          </Button>
+
+          {/* Theme Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="size-8.5 rounded-xl border border-border/60 text-muted-foreground hover:text-foreground cursor-pointer active:scale-95 transition-all"
+            title={isDark ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}
+          >
+            {isDark ? (
+              <Sun className="size-4 text-amber-400" />
+            ) : (
+              <Moon className="size-4 text-indigo-400" />
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="py-2">
+        <Progress value={progressPercent} className="h-1.5 w-full bg-secondary rounded-full" />
+      </div>
+
+      {/* Flashcard 3D Interactive Card */}
+      <div className="flex-1 flex flex-col justify-center my-auto py-3">
+        <div 
+          onClick={handleFlip}
+          className="perspective-1000 w-full min-h-[480px] sm:min-h-[520px] cursor-pointer group"
+        >
+          <div
+            className={`relative w-full h-full min-h-[480px] sm:min-h-[520px] rounded-3xl border border-border/90 shadow-xl transition-transform duration-500 transform-style-3d bg-card ${
+              isFlipped ? 'rotate-y-180 border-primary/50' : 'hover:border-primary/40'
+            }`}
+          >
+            {/* FRONT FACE (Question + ALL 4 Options) */}
+            <div className={`absolute inset-0 w-full h-full p-6 sm:p-8 flex flex-col justify-between backface-hidden rounded-3xl bg-card overflow-y-auto ${
+              isFlipped ? 'pointer-events-none' : ''
+            }`}>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono uppercase tracking-wider font-extrabold px-2.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25">
+                      MẶT TRƯỚC · CÂU HỎI
+                    </span>
+                    <Badge variant="outline" className="text-[10px] font-mono">
+                      {currentQ?.type === 'multi' ? 'Nhiều đáp án đúng' : '1 đáp án duy nhất'}
+                    </Badge>
+                  </div>
+                  {getBoxBadge(effectiveStats?.leitner_box)}
+                </div>
+
+                {/* Question English - High Contrast & Large Font */}
+                <div className="text-lg sm:text-xl font-black text-foreground leading-relaxed pt-1">
+                  {currentQ?.question}
+                </div>
+
+                {/* Question Vietnamese (if active) */}
+                {showVi && currentQ?.vi?.question && (
+                  <div className="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-xs sm:text-sm text-blue-300 leading-relaxed space-y-1 animate-in fade-in">
+                    <span className="text-[10px] uppercase font-bold text-blue-400 font-mono tracking-wider block">
+                      Dịch nghĩa câu hỏi:
+                    </span>
+                    <p className="font-medium">{currentQ.vi.question}</p>
+                  </div>
+                )}
+
+                {/* All Options Preview on Front Face */}
+                <div className="space-y-2.5 pt-2">
+                  <span className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider block">
+                    Các lựa chọn đáp án:
+                  </span>
+                  <div className="grid grid-cols-1 gap-2">
+                    {currentQ?.options.map((optionText, idx) => {
+                      const letter = String.fromCharCode(65 + idx);
+                      const viOption = showVi ? currentQ?.vi?.options?.[idx] : null;
+                      return (
+                        <div
+                          key={idx}
+                          className="p-3 rounded-2xl border border-border/70 bg-muted/20 hover:bg-muted/40 transition-colors flex items-start gap-3 text-left"
+                        >
+                          <span className="size-6.5 rounded-lg bg-muted text-foreground border border-border/80 font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                            {letter}
+                          </span>
+                          <div className="space-y-0.5 text-xs sm:text-sm">
+                            <p className="font-semibold text-foreground leading-relaxed">{optionText}</p>
+                            {viOption && (
+                              <p className="text-xs text-muted-foreground leading-relaxed italic">{viOption}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom prompt */}
+              <div className="pt-4 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground mt-4">
+                <span className="flex items-center gap-1.5 group-hover:text-primary transition-colors font-medium">
+                  <RotateCw className="size-3.5 group-hover:rotate-180 transition-transform duration-500" />
+                  Bấm <strong className="text-foreground font-mono">Space</strong> hoặc click thẻ để xem đáp án chuẩn
+                </span>
+                <span className="text-[10.5px] opacity-70">
+                  Phím tắt: 1 Chưa nhớ · 2 Đã thuộc
+                </span>
+              </div>
+            </div>
+
+            {/* BACK FACE (Highlighted Answer + ALL Options + Explanation) */}
+            <div className={`absolute inset-0 w-full h-full p-6 sm:p-8 flex flex-col justify-between backface-hidden rotate-y-180 rounded-3xl bg-card overflow-y-auto ${
+              !isFlipped ? 'pointer-events-none' : ''
+            }`}>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono uppercase tracking-wider font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                      <Check className="size-3 font-bold" /> MẶT SAU · ĐÁP ÁN CHUẨN
+                    </span>
+                  </div>
+                  {getBoxBadge(effectiveStats?.leitner_box)}
+                </div>
+
+                {/* Question Reminder at Top */}
+                <div className="text-sm sm:text-base font-bold text-foreground leading-snug">
+                  {currentQ?.question}
+                </div>
+
+                {/* All Options on Back - Highlight Correct vs Dim Incorrect */}
+                <div className="space-y-2 pt-1">
+                  <span className="text-xs font-mono font-bold uppercase text-emerald-400 tracking-wider block">
+                    Đối chiếu đáp án:
+                  </span>
+                  <div className="grid grid-cols-1 gap-2">
+                    {currentQ?.options.map((optionText, idx) => {
+                      const letter = String.fromCharCode(65 + idx);
+                      const isCorrect = isCorrectOption(idx);
+                      const viOption = showVi ? currentQ?.vi?.options?.[idx] : null;
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-2xl border transition-all flex items-start gap-3 text-left ${
+                            isCorrect
+                              ? 'bg-emerald-500/15 border-emerald-500 text-foreground shadow-xs'
+                              : 'bg-muted/10 border-border/40 opacity-40'
+                          }`}
+                        >
+                          <span className={`size-6.5 rounded-lg font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs ${
+                            isCorrect ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {letter}
+                          </span>
+                          <div className="space-y-0.5 text-xs sm:text-sm flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className={`font-bold leading-relaxed ${isCorrect ? 'text-emerald-400' : 'text-muted-foreground'}`}>
+                                {optionText}
+                              </p>
+                              {isCorrect && (
+                                <Badge variant="outline" className="text-[9.5px] border-emerald-500/40 text-emerald-400 shrink-0 font-bold">
+                                  ✓ CHUẨN
+                                </Badge>
+                              )}
+                            </div>
+                            {viOption && (
+                              <p className={`text-xs leading-relaxed italic ${isCorrect ? 'text-emerald-300/80' : 'text-muted-foreground/60'}`}>
+                                {viOption}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Detailed Explanation */}
+                {currentQ?.explanation && (
+                  <div className="p-4 rounded-2xl bg-muted/40 border border-border/70 text-xs text-foreground/90 space-y-2 leading-relaxed">
+                    <span className="text-[10px] font-mono uppercase font-bold text-muted-foreground flex items-center gap-1.5">
+                      <HelpCircle className="size-3.5 text-primary" /> Giải thích chi tiết & Ghi chú:
+                    </span>
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap font-sans text-xs sm:text-sm">
+                      {currentQ.explanation}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom prompt on back */}
+              <div className="pt-4 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground mt-4">
+                <span className="flex items-center gap-1.5 group-hover:text-primary transition-colors font-medium">
+                  <RotateCw className="size-3.5" />
+                  Bấm <strong className="text-foreground font-mono">Space</strong> để lật lại câu hỏi
+                </span>
+                <span className="text-[10.5px] opacity-70">
+                  Chọn Chưa nhớ (1) hoặc Đã thuộc (2) bên dưới
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Action Bar (Decision Controls) */}
+      <div className="pt-3 pb-1 border-t border-border/50">
+        <div className="grid grid-cols-3 gap-2.5 max-w-xl mx-auto">
+          {/* Again / Chưa nhớ */}
+          <Button
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRate('again');
+            }}
+            className="h-12 rounded-2xl border-red-500/40 hover:border-red-500 hover:bg-red-500/10 text-red-400 font-bold text-xs sm:text-sm cursor-pointer active:scale-95 shadow-sm transition-all flex items-center justify-center gap-2 group"
+          >
+            <div className="size-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <X className="size-3.5 stroke-[3]" />
+            </div>
+            <span>Chưa nhớ</span>
+            <kbd className="hidden sm:inline font-mono text-[10px] bg-muted/80 px-1.5 py-0.5 rounded border border-border/70 text-foreground">
+              ← 1
+            </kbd>
+          </Button>
+
+          {/* Flip / Lật thẻ */}
+          <Button
+            variant="secondary"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleFlip();
+            }}
+            className="h-12 rounded-2xl font-bold text-xs sm:text-sm cursor-pointer active:scale-95 shadow-sm transition-all flex items-center justify-center gap-2 border border-border/70 hover:bg-muted text-foreground"
+          >
+            <RotateCw className={`size-4 ${isFlipped ? 'rotate-180' : ''} transition-transform duration-300`} />
+            <span>{isFlipped ? 'Lật câu hỏi' : 'Lật đáp án'}</span>
+            <kbd className="hidden sm:inline font-mono text-[10px] bg-background/80 px-1.5 py-0.5 rounded border border-border/70 text-muted-foreground">
+              Space
+            </kbd>
+          </Button>
+
+          {/* Mastered / Đã thuộc */}
+          <Button
+            variant="default"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRate('mastered');
+            }}
+            className="h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm cursor-pointer active:scale-95 shadow-md transition-all flex items-center justify-center gap-2 group"
+          >
+            <div className="size-5 rounded-full bg-white/20 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Check className="size-3.5 stroke-[3]" />
+            </div>
+            <span>Đã thuộc</span>
+            <kbd className="hidden sm:inline font-mono text-[10px] bg-emerald-700/60 text-emerald-100 px-1.5 py-0.5 rounded border border-emerald-500/40">
+              2 →
+            </kbd>
+          </Button>
+        </div>
+      </div>
+
+      {/* Exit Confirmation Dialog */}
+      <Dialog open={exitConfirmOpen} onOpenChange={setExitConfirmOpen}>
+        <DialogContent className="max-w-md p-6 rounded-3xl bg-card border-border/80 shadow-2xl">
+          <DialogHeader className="space-y-1.5">
+            <div className="flex items-center gap-2 text-amber-500 font-bold text-xs uppercase tracking-wider">
+              <AlertCircle className="size-4" />
+              Tạm dừng phiên ôn tập
+            </div>
+            <DialogTitle className="text-lg font-bold text-foreground">
+              Bạn có muốn rời khỏi phiên Flashcard?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              Bạn đã ôn được <strong className="text-foreground">{currentIndex}</strong> / {totalCount} thẻ. Kết quả Hộp Leitner và tiến trình ôn tập của các câu đã lật đã được tự động lưu. Bạn có thể tiếp tục bất cứ lúc nào!
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2 border-t border-border/40 mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setExitConfirmOpen(false)}
+              className="flex-1 h-9.5 rounded-xl border-border/80 text-foreground font-semibold text-xs cursor-pointer active:scale-95"
+            >
+              Tiếp tục lật thẻ
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              onClick={handleConfirmExit}
+              className="flex-1 h-9.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs cursor-pointer active:scale-95 shadow-xs"
+            >
+              Lưu & Về Trang chủ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+

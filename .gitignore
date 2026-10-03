@@ -11,6 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*.local
+.firebaserc
+.firebase/
 
 # Editor directories and files
 .vscode/*
@@ -24,3 +28,4 @@ dist-ssr
 *.sw?
 src-tauri/target/
 *.exe
+*.dll

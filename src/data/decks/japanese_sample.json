@@ -1,0 +1,198 @@
+{
+  "title": "JLPT N3 — Hán Tự & Từ Vựng Trọng Tâm",
+  "source": "JLPT N3 Standard Curriculum",
+  "category_id": "japanese",
+  "questions": [
+    {
+      "id": "ja_01",
+      "type": "single",
+      "question": "「契約」の正しい読み方はどれですか。",
+      "options": ["けいやく", "けいあく", "げいやく", "せいやく"],
+      "answer": [0],
+      "explanation": "「契約」（けいやく - Khế Ước）có nghĩa là hợp đồng, khế ước giao kết.",
+      "note": "Âm Hán Việt: Khế Ước (契約)",
+      "answer_source": "jlpt_n3",
+      "shuffle_options": true,
+      "vi": {
+        "question": "Cách đọc đúng của từ 「契約」 là gì?",
+        "options": ["けいやく (keiyaku)", "けいあく (keiaku)", "げいやく (geiyaku)", "せいやく (seiyaku)"]
+      }
+    },
+    {
+      "id": "ja_02",
+      "type": "single",
+      "question": "次の文の（　）に入れるのに最もよいものを選びなさい。\n「会議の資料を事前に（　）しておいてください。」",
+      "options": ["配布", "配達", "配置", "発注"],
+      "answer": [0],
+      "explanation": "「配布」（はいふ - Phối Bố）nghĩa là phát/phân phát tài liệu. 配達 là giao hàng, 配置 là sắp đặt vị trí, 発注 là đặt hàng.",
+      "note": "Phối Bố (配布) = Phát tài liệu",
+      "answer_source": "jlpt_n3",
+      "shuffle_options": true,
+      "vi": {
+        "question": "Chọn từ thích hợp nhất điền vào chỗ trống:\n「Hãy chuẩn bị ( ... ) trước tài liệu cho cuộc họp.」",
+        "options": ["配布 (Phân phát)", "配達 (Giao hàng)", "配置 (Bố trí)", "発注 (Đặt hàng)"]
+      }
+    },
+    {
+      "id": "ja_03",
+      "type": "single",
+      "question": "「絶妙」の正しい意味・用法はどれですか。",
+      "options": [
+        "非常にすぐれていて素晴らしいこと",
+        "まったく役に立たないこと",
+        "とても恐ろしくて危険なこと",
+        "時間がかかりすぎて遅いこと"
+      ],
+      "answer": [0],
+      "explanation": "「絶妙」（ぜつみょう - Tuyệt Diệu）nghĩa là tuyệt vời, tài tình, hoàn hảo (VD: 絶妙なタイミング - thời điểm cực kỳ chuẩn xác/tuyệt vời).",
+      "note": "Tuyệt Diệu (絶妙)",
+      "answer_source": "jlpt_n3",
+      "shuffle_options": true,
+      "vi": {
+        "question": "Ý nghĩa đúng của từ 「絶妙」 là gì?",
+        "options": [
+          "Rất tuyệt vời, tài tình và hoàn hảo",
+          "Hoàn toàn không có ích gì",
+          "Rất đáng sợ và nguy hiểm",
+          "Tốn quá nhiều thời gian và chậm chạp"
+        ]
+      }
+    },
+    {
+      "id": "ja_04",
+      "type": "single",
+      "question": "「改善」の対義語（反対語）として最も適切なものはどれですか。",
+      "options": ["改悪", "改良", "改革", "改造"],
+      "answer": [0],
+      "explanation": "「改善」（かいぜん - Cải Thiện: làm tốt hơn) có từ trái nghĩa là 「改悪」（かいあく - Cải Ác: thay đổi làm cho tệ đi).",
+      "note": "Cải Thiện >< Cải Ác (改善 >< 改悪)",
+      "answer_source": "jlpt_n3",
+      "shuffle_options": true,
+      "vi": {
+        "question": "Từ trái nghĩa thích hợp nhất của 「改善」 (Cải thiện) là gì?",
+        "options": ["改悪 (Làm tệ đi)", "改良 (Cải tiến)", "改革 (Cải cách)", "改造 (Cải tạo)"]
+      }
+    },
+    {
+      "id": "ja_05",
+      "type": "single",
+      "question": "「優先」の正しい読み方はどれですか。",
+      "options": ["ゆうせん", "ゆせん", "おうせん", "ようせん"],
+      "answer": [0],
+      "explanation": "「優先」（ゆうせん - Ưu Tiên）nghĩa là ưu tiên, đặt lên hàng đầu (VD: 優先席 - ghế ưu tiên).",
+      "note": "Âm Hán Việt: Ưu Tiên (優先)",
+      "answer_source": "jlpt_n3",
+      "shuffle_options": true,
+      "vi": {
+        "question": "Cách đọc đúng của từ 「優先」 là gì?",
+        "options": ["ゆうせん (yuusen)", "ゆせん (yusen)", "おうせん (ousen)", "ようせん (yousen)"]
+      }
+    },
+    {
+      "id": "ja_06",
+      "type": "single",
+      "question": "「慎重」を使った正しい文はどれですか。",
+      "options": [
+        "重要な決定をする前に、慎重に検討した。",
+        "彼女はとても慎重で、誰とでもすぐ友達になる。",
+        "雨が激しく降って、川が慎重に氾濫した。",
+        "彼は料理が慎重で、いつも美味しいものを作る。"
+      ],
+      "answer": [0],
+      "explanation": "「慎重」（しんちょう - Thận Trọng）nghĩa là cẩn trọng, suy nghĩ kỹ lưỡng trước khi hành động.",
+      "note": "Thận Trọng (慎重)",
+      "answer_source": "jlpt_n3",
+      "shuffle_options": true,
+      "vi": {
+        "question": "Câu nào sử dụng đúng từ 「慎重」 (Thận trọng)?",
+        "options": [
+          "Trước khi đưa ra quyết định quan trọng, chúng tôi đã cân nhắc thận trọng.",
+          "Cô ấy rất thận trọng, có thể làm quen với bất kỳ ai ngay lập tức.",
+          "Mưa lớn khiến con sông thận trọng tràn bờ.",
+          "Anh ấy nấu ăn rất thận trọng, luôn làm ra món ngon."
+        ]
+      }
+    },
+    {
+      "id": "ja_07",
+      "type": "single",
+      "question": "「延長」の正しい読み方はどれですか。",
+      "options": ["えんちょう", "えんじょう", "あんちょう", "あんじょう"],
+      "answer": [0],
+      "explanation": "「延長」（えんちょう - Duyên Trường）nghĩa là kéo dài thời gian, gia hạn (VD: 締め切りを延長する - gia hạn deadline).",
+      "note": "Duyên Trường (延長)",
+      "answer_source": "jlpt_n3",
+      "shuffle_options": true,
+      "vi": {
+        "question": "Cách đọc đúng của từ 「延長」 là gì?",
+        "options": ["えんちょう (enchou)", "えんじょう (enjou)", "あんちょう (anchou)", "あんじょう (anjou)"]
+      }
+    },
+    {
+      "id": "ja_08",
+      "type": "single",
+      "question": "「～にすぎない」の意味として最も適切なものはどれですか。",
+      "options": [
+        "ただ～だけで、それ以上のものではない",
+        "～を通り過ぎてしまった",
+        "～のせいで失敗した",
+        "～になる可能性が極めて高い"
+      ],
+      "answer": [0],
+      "explanation": "Mẫu ngữ pháp 「N / V thể thường + にすぎない」 diễn tả 'chẳng qua chỉ là..., không hơn không kém'.",
+      "note": "Ngữ pháp N3: ～にすぎない (Chỉ là...)",
+      "answer_source": "jlpt_n3",
+      "shuffle_options": true,
+      "vi": {
+        "question": "Ý nghĩa đúng nhất của cấu trúc ngữ pháp 「～にすぎない」 là gì?",
+        "options": [
+          "Chẳng qua chỉ là... không hơn không kém",
+          "Đã đi ngang qua mất rồi",
+          "Thất bại là do nguyên nhân...",
+          "Khả năng cực kỳ cao sẽ trở thành..."
+        ]
+      }
+    },
+    {
+      "id": "ja_09",
+      "type": "single",
+      "question": "「妥協」の正しい読み方はどれですか。",
+      "options": ["だきょう", "たきょう", "だこう", "たこう"],
+      "answer": [0],
+      "explanation": "「妥協」（だきょう - Thỏa Hiệp）nghĩa là thỏa hiệp, nhân nhượng giữa hai bên trong đàm phán.",
+      "note": "Thỏa Hiệp (妥協)",
+      "answer_source": "jlpt_n3",
+      "shuffle_options": true,
+      "vi": {
+        "question": "Cách đọc đúng của từ 「妥協」 là gì?",
+        "options": ["だきょう (dakyou)", "たきょう (takyou)", "だこう (dakou)", "たこう (takou)"]
+      }
+    },
+    {
+      "id": "ja_10",
+      "type": "single",
+      "question": "「一概に（～ない）」とセットでよく使われる意味合いはどれですか。",
+      "options": [
+        "すべて同じようにひとまとめには言えない",
+        "絶対に間違いなくそうである",
+        "できるだけ早く行動すべきである",
+        "誰もが知っている常識である"
+      ],
+      "answer": [0],
+      "explanation": "「一概に～ない」（いちがいに～ない）thường đi với phủ định, nghĩa là 'không thể vơ đũa cả nắm / không thể khẳng định một cách phiến diện'.",
+      "note": "Nhất Khái (一概に～ない)",
+      "answer_source": "jlpt_n3",
+      "shuffle_options": true,
+      "vi": {
+        "question": "Cụm 「一概に（～ない）」 thường diễn tả ý nghĩa gì?",
+        "options": [
+          "Không thể vơ đũa cả nắm / không thể nói phiến diện",
+          "Tuyệt đối chắc chắn đúng như thế",
+          "Nên hành động càng sớm càng tốt",
+          "Là thường thức mà ai cũng biết"
+        ]
+      }
+    }
+  ]
+}
+

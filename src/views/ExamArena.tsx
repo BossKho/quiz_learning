@@ -8,13 +8,16 @@ import {
   Flag, 
   Languages, 
   ArrowLeft, 
-  ArrowRight, 
+  ArrowRight,
   Send, 
-  AlertTriangle
+  AlertTriangle,
+  Sun,
+  Moon
 } from 'lucide-react';
 import type { Question, ActiveSession, ExamResultSummary } from '@/types/quiz';
 import { prepareQuestionForSession, calculateExamResult, type ShuffledQuestion } from '@/services/session-engine';
 import { dbService } from '@/services/db';
+import { useTheme } from '@/lib/theme';
 
 interface ExamArenaProps {
   session: ActiveSession;
@@ -39,6 +42,8 @@ export const ExamArena = ({
   );
   const [showVi, setShowVi] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [showExitWarningModal, setShowExitWarningModal] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
 
   // Memoize shuffled questions so options stay identical during navigation
   const preparedQuestions = useMemo<ShuffledQuestion[]>(() => {
@@ -159,6 +164,9 @@ export const ExamArena = ({
       } else if (e.key.toLowerCase() === 't') {
         e.preventDefault();
         setShowVi((prev) => !prev);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowExitWarningModal(true);
       } else if (e.key === 'ArrowRight' && currentIndex < preparedQuestions.length - 1) {
         setCurrentIndex((i) => i + 1);
       } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
@@ -190,9 +198,14 @@ export const ExamArena = ({
       {/* Top Header & Exam Status */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={onExit} className="gap-1 text-xs">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowExitWarningModal(true)}
+            className="gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer active:scale-95"
+          >
             <ArrowLeft className="size-3.5" />
-            Pause & Exit
+            Tạm dừng & Thoát (Esc)
           </Button>
           <div className="h-4 w-px bg-border" />
           <div>
@@ -229,10 +242,25 @@ export const ExamArena = ({
             variant="default"
             size="sm"
             onClick={() => setShowSubmitModal(true)}
-            className="text-xs gap-1.5 h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="text-xs gap-1.5 h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
           >
             <Send className="size-3.5" />
-            <span>Submit Exam</span>
+            <span>Nộp bài thi</span>
+          </Button>
+
+          {/* Theme Switcher inside Exam */}
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={toggleTheme}
+            title={isDark ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}
+            className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer rounded-lg border-border/80"
+          >
+            {isDark ? (
+              <Sun className="size-4 text-amber-400" />
+            ) : (
+              <Moon className="size-4 text-indigo-400" />
+            )}
           </Button>
         </div>
       </div>
@@ -465,6 +493,68 @@ export const ExamArena = ({
               Submit & View Results
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Urgent Exam Exit Warning Dialog */}
+      <Dialog open={showExitWarningModal} onOpenChange={setShowExitWarningModal}>
+        <DialogContent className="max-w-md p-6 rounded-3xl bg-card border-destructive/50 shadow-2xl">
+          <DialogHeader className="space-y-1.5">
+            <div className="flex items-center gap-2 text-destructive font-bold text-xs uppercase tracking-wider">
+              <AlertTriangle className="size-4 animate-bounce" />
+              Cảnh báo quan trọng: Phòng thi đang diễn ra
+            </div>
+            <DialogTitle className="text-lg font-black text-foreground">
+              Bạn có chắc chắn muốn rời khỏi bài thi?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed space-y-2">
+              <span className="block">
+                Đồng hồ bấm giờ còn lại: <strong className="text-destructive font-mono">{timeFormatted}</strong>.
+              </span>
+              <span className="block">
+                Bạn đã trả lời <strong className="text-foreground">{answeredCount}</strong> / {totalCount} câu hỏi ({unansweredCount} câu chưa làm).
+              </span>
+              <span className="block text-[11px] text-muted-foreground/90 bg-muted/40 p-2.5 rounded-xl border border-border/60">
+                Nếu tạm dừng, tiến trình làm bài sẽ được lưu lại để bạn tiếp tục sau. Bạn cũng có thể nộp bài và chấm điểm ngay lập tức.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-2.5 pt-3 border-t border-border/40 mt-3">
+            <Button
+              type="button"
+              variant="default"
+              onClick={() => setShowExitWarningModal(false)}
+              className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs cursor-pointer active:scale-95 shadow-xs"
+            >
+              Ở lại tiếp tục làm bài
+            </Button>
+
+            <div className="grid grid-cols-2 gap-2.5 w-full">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowExitWarningModal(false);
+                  handleForceSubmit();
+                }}
+                className="h-10 rounded-xl border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/10 font-bold text-xs cursor-pointer active:scale-95"
+              >
+                Nộp bài & Chấm điểm
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  setShowExitWarningModal(false);
+                  onExit();
+                }}
+                className="h-10 rounded-xl font-bold text-xs cursor-pointer active:scale-95 shadow-xs"
+              >
+                Tạm dừng & Thoát
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
