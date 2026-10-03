@@ -88,6 +88,10 @@ class DatabaseManager {
       wasmBinary,
     });
 
+    if (typeof localStorage !== 'undefined') {
+      this.currentUserId = localStorage.getItem('quiz_last_active_user_id') || null;
+    }
+
     const savedBinary = await loadDbFromIDB();
     if (savedBinary && savedBinary.length > 0) {
       try {
@@ -210,7 +214,7 @@ class DatabaseManager {
     }
   }
 
-  private persistImmediate(): void {
+  public persistImmediate(): void {
     if (this.saveTimeout) {
       clearTimeout(this.saveTimeout);
       this.saveTimeout = null;
@@ -218,19 +222,75 @@ class DatabaseManager {
     if (this.db) {
       const data = this.db.export();
       saveDbToIDB(data);
+
+      // Đồng thời lưu tức thì bản sao lưu vào localStorage cho user hiện tại
+      if (this.currentUserId && typeof localStorage !== 'undefined') {
+        try {
+          const exportStr = this.syncExportProgressJSON();
+          localStorage.setItem(`quiz_user_progress_${this.currentUserId}`, exportStr);
+        } catch (e) {
+          console.warn('Lỗi ghi đè localStorage tức thời:', e);
+        }
+      }
     }
   }
 
   private persistDebounced(): void {
-    if (this.saveTimeout) {
-      clearTimeout(this.saveTimeout);
+    // Để đảm bảo không bao giờ mất dữ liệu khi người dùng tắt app hoặc nhấn thoát,
+    // ta chạy persistImmediate ngay lập tức!
+    this.persistImmediate();
+  }
+
+  /**
+   * Xuất nhanh toàn bộ dữ liệu tiến độ (question_stats, active_sessions) đồng bộ từ memory
+   */
+  public syncExportProgressJSON(): string {
+    if (!this.db) return '{}';
+    const statsStmt = this.db.prepare(`
+      SELECT question_id, leitner_box, next_review_at, correct_count, 
+             incorrect_count, streak, is_bookmarked, last_reviewed_at
+      FROM question_stats;
+    `);
+    const questionStats: QuestionStats[] = [];
+    while (statsStmt.step()) {
+      const row = statsStmt.getAsObject();
+      questionStats.push({
+        question_id: row.question_id as string,
+        leitner_box: row.leitner_box as number,
+        next_review_at: row.next_review_at as number,
+        correct_count: row.correct_count as number,
+        incorrect_count: row.incorrect_count as number,
+        streak: row.streak as number,
+        is_bookmarked: Boolean(row.is_bookmarked),
+        last_reviewed_at: row.last_reviewed_at as number,
+      });
     }
-    this.saveTimeout = setTimeout(() => {
-      if (this.db) {
-        const data = this.db.export();
-        saveDbToIDB(data);
-      }
-    }, 400);
+    statsStmt.free();
+
+    const sessStmt = this.db.prepare('SELECT * FROM active_sessions WHERE is_completed = 0;');
+    const sessions: ActiveSession[] = [];
+    while (sessStmt.step()) {
+      const row = sessStmt.getAsObject();
+      sessions.push(this._mapRowToSession(row));
+    }
+    sessStmt.free();
+
+    const exportData: ProgressExportData = {
+      app: 'QuizLearningPro',
+      version: 1,
+      exported_at: Date.now(),
+      exported_at_iso: new Date().toISOString(),
+      stats_summary: {
+        total_questions: questionStats.length,
+        mastered: questionStats.filter((s) => s.leitner_box === 5).length,
+        learning: questionStats.filter((s) => s.leitner_box >= 2 && s.leitner_box <= 4).length,
+        bookmarked: questionStats.filter((s) => s.is_bookmarked).length,
+        completed_sessions: 0,
+      },
+      question_stats: questionStats,
+      active_sessions: sessions,
+    };
+    return JSON.stringify(exportData);
   }
 
   /**
@@ -241,10 +301,16 @@ class DatabaseManager {
     await this.init();
     if (!this.db) return;
 
-    // 1. Nếu có tài khoản cũ đang chạy, lưu bản backup tiến độ vào localStorage
-    if (this.currentUserId) {
+    // QUAN TRỌNG NHẤT: Nếu là cùng một tài khoản đang hoạt động (ví dụ khi tắt mở lại app),
+    // TUYỆT ĐỐI KHÔNG XÓA DỮ LIỆU ĐANG CÓ!
+    if (this.currentUserId && this.currentUserId === newUserId) {
+      return;
+    }
+
+    // 1. Nếu có tài khoản cũ đang chạy và khác với newUserId, lưu bản backup tiến độ vào localStorage
+    if (this.currentUserId && this.currentUserId !== newUserId && typeof localStorage !== 'undefined') {
       try {
-        const currentData = await this.exportProgressJSON();
+        const currentData = this.syncExportProgressJSON();
         localStorage.setItem(`quiz_user_progress_${this.currentUserId}`, currentData);
       } catch (err) {
         console.warn('Lưu tiến độ người dùng trước thất bại:', err);
@@ -256,9 +322,16 @@ class DatabaseManager {
     this.db.run('DELETE FROM active_sessions;');
 
     this.currentUserId = newUserId;
+    if (typeof localStorage !== 'undefined') {
+      if (newUserId) {
+        localStorage.setItem('quiz_last_active_user_id', newUserId);
+      } else {
+        localStorage.removeItem('quiz_last_active_user_id');
+      }
+    }
 
     // 3. Nếu là user hợp lệ, nạp lại tiến độ đã lưu trước đó của user này (nếu có)
-    if (newUserId) {
+    if (newUserId && typeof localStorage !== 'undefined') {
       const cached = localStorage.getItem(`quiz_user_progress_${newUserId}`);
       if (cached) {
         try {

@@ -27,6 +27,7 @@ import {
 import type { Question, ActiveSession, QuestionStats } from '@/types/quiz';
 import { prepareQuestionForSession, isAnswerCorrect, type ShuffledQuestion } from '@/services/session-engine';
 import { dbService } from '@/services/db';
+import { triggerAutoCloudSync } from '@/services/firebaseService';
 import { useTheme } from '@/lib/theme';
 
 interface StudyArenaProps {
@@ -90,7 +91,7 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
         console.error('Failed to update Leitner stats:', err);
       }
 
-      // Save session
+      // Save session immediately
       const updated: ActiveSession = {
         ...session,
         current_index: currentIndex,
@@ -98,7 +99,8 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
         updated_at: Date.now(),
       };
       onUpdateSession(updated);
-      dbService.saveSession(updated);
+      await dbService.saveSession(updated);
+      triggerAutoCloudSync();
     } else {
       // Multi-select toggle
       setUserAnswers((prev) => {
@@ -136,11 +138,12 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
       updated_at: Date.now(),
     };
     onUpdateSession(updated);
-    dbService.saveSession(updated);
+    await dbService.saveSession(updated);
+    triggerAutoCloudSync();
   }, [currentQ, qId, selectedOptions, currentIndex, session, userAnswers, onUpdateSession]);
 
   // Advance to next question
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback(async () => {
     if (currentIndex < preparedQuestions.length - 1) {
       const nextIdx = currentIndex + 1;
       setCurrentIndex(nextIdx);
@@ -153,7 +156,8 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
         updated_at: Date.now(),
       };
       onUpdateSession(updated);
-      dbService.saveSession(updated);
+      await dbService.saveSession(updated);
+      triggerAutoCloudSync();
     }
   }, [currentIndex, preparedQuestions.length, session, userAnswers, onUpdateSession]);
 
@@ -547,7 +551,16 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
             <Button
               type="button"
               variant="default"
-              onClick={() => {
+              onClick={async () => {
+                const updated: ActiveSession = {
+                  ...session,
+                  current_index: currentIndex,
+                  user_answers: userAnswers,
+                  updated_at: Date.now(),
+                };
+                onUpdateSession(updated);
+                await dbService.saveSession(updated);
+                triggerAutoCloudSync();
                 setExitConfirmOpen(false);
                 onExit();
               }}

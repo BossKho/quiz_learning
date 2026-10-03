@@ -21,7 +21,7 @@ import { isTauri } from '@tauri-apps/api/core';
 import { getAvailableTopics } from '@/config/topics';
 import { Loader2 } from 'lucide-react';
 import type { User } from 'firebase/auth';
-import { subscribeToAuthState, syncLocalToCloud, pullCloudToLocal } from '@/services/firebaseService';
+import { subscribeToAuthState, syncLocalToCloud, pullCloudToLocal, triggerAutoCloudSync } from '@/services/firebaseService';
 import { AuthModal } from '@/components/AuthModal';
 import { ProfileView } from '@/views/ProfileView';
 import { LandingPage } from '@/views/LandingPage';
@@ -310,13 +310,26 @@ export function App() {
     setCurrentView('flashcard');
   };
 
-  const handleExitToDashboard = () => {
+  const handleExitToDashboard = async () => {
     setActiveSession(null);
     setSessionQuestions([]);
     setFlashcardQuestions([]);
     setCurrentView('dashboard');
-    reloadData();
+    dbService.persistImmediate();
+    if (currentUser) {
+      triggerAutoCloudSync(currentUser.uid);
+    }
+    await reloadData();
   };
+
+  // Tự động lưu tức thì cơ sở dữ liệu khi người dùng bấm dấu X thoát app
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      dbService.persistImmediate();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   if (!isDbReady) {
     if (initError) {

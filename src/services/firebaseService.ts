@@ -434,3 +434,27 @@ export async function pullCloudToLocal(
   const jsonString = JSON.stringify(cloudData);
   return await dbService.importProgressJSON(jsonString, mergeMode);
 }
+
+/**
+ * Tự động đồng bộ ngầm dữ liệu lên đám mây Firestore (Chủ động mỗi khi làm câu hỏi hoặc lưu phiên)
+ */
+let autoSyncTimer: any = null;
+
+export function triggerAutoCloudSync(userId?: string | null): void {
+  const uid = userId || auth.currentUser?.uid;
+  if (!uid) return;
+
+  if (autoSyncTimer) {
+    clearTimeout(autoSyncTimer);
+  }
+
+  autoSyncTimer = setTimeout(async () => {
+    try {
+      await syncLocalToCloud(uid);
+      console.log('[AutoCloudSync] Tiến độ đã được tự động lưu lên Đám mây an toàn.');
+    } catch {
+      // Đang offline hoặc gián đoạn mạng, SQLite cục bộ vẫn bảo toàn 100%
+    }
+  }, 1000);
+}
+
