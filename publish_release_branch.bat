@@ -1,14 +1,14 @@
 @echo off
-title Push Standalone Exe to Git Release Branch
+title Push Setup Exe to Git Release Branch
 cd /d "%~dp0"
 
 echo ========================================================
-echo   Updating release-exe branch with QuizLearningPro.exe
+echo   Updating release-exe branch with QuizLearningPro_Setup.exe
 echo ========================================================
 echo.
 
-if not exist "QuizLearningPro.exe" (
-    echo [ERROR] QuizLearningPro.exe not found!
+if not exist "QuizLearningPro_Setup.exe" (
+    echo [ERROR] QuizLearningPro_Setup.exe not found!
     echo Please run build first.
     pause
     exit /b 1
@@ -25,11 +25,11 @@ if %ERRORLEVEL% NEQ 0 (
 echo [2/5] Merging latest updates from master...
 git merge master -m "Merge master into release-exe"
 
-echo [3/5] Force-staging latest binaries...
-git add -f QuizLearningPro.exe WebView2Loader.dll
+echo [3/5] Force-staging latest Setup installer...
+git add -f QuizLearningPro_Setup.exe
 
-echo [4/5] Committing latest binary release...
-git commit -m "release: update standalone QuizLearningPro.exe to latest version"
+echo [4/5] Committing latest Setup release...
+git commit -m "release: update QuizLearningPro_Setup.exe to latest version"
 
 echo [5/5] Pushing to GitHub origin release-exe...
 git push origin release-exe
@@ -40,7 +40,7 @@ git checkout master
 
 echo.
 echo ========================================================
-echo   SUCCESS! Standalone exe branch updated on GitHub.
+echo   SUCCESS! Setup installer branch updated on GitHub.
 echo   Company clone command:
 echo   git clone -b release-exe --single-branch https://github.com/BossKho/quiz_learning.git
 echo ========================================================
