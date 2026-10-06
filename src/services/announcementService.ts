@@ -160,3 +160,59 @@ export function subscribeToLiveAnnouncements(
     return () => {};
   }
 }
+
+export interface RegisteredMember {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string | null;
+}
+
+/**
+ * Fetches the list of all registered members from Firestore for Admin targeting
+ */
+export async function getRegisteredUsers(): Promise<RegisteredMember[]> {
+  try {
+    const colRef = collection(firestore, 'users');
+    const snap = await getDocs(colRef);
+    const members: RegisteredMember[] = [];
+    snap.forEach((d) => {
+      const data = d.data();
+      if (data.email) {
+        members.push({
+          uid: data.uid || d.id,
+          email: data.email,
+          displayName: data.displayName || data.email.split('@')[0],
+          photoURL: data.photoURL || null,
+        });
+      }
+    });
+
+    // Ensure Admin email is always present in the list
+    const hasAdmin = members.some((m) => m.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+    if (!hasAdmin) {
+      members.unshift({
+        uid: 'admin_primary',
+        email: ADMIN_EMAIL,
+        displayName: 'Admin (Bạn)',
+      });
+    }
+
+    // Sort: Admin first, then alphabetical by displayName
+    return members.sort((a, b) => {
+      if (a.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) return -1;
+      if (b.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) return 1;
+      return a.displayName.localeCompare(b.displayName);
+    });
+  } catch (err) {
+    console.warn('Failed to fetch registered members:', err);
+    return [
+      {
+        uid: 'admin_primary',
+        email: ADMIN_EMAIL,
+        displayName: 'Admin (Bạn)',
+      },
+    ];
+  }
+}
+

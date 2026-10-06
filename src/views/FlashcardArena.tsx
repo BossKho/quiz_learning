@@ -534,51 +534,46 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
                   {currentQ?.question}
                 </div>
 
-                {/* All Options on Back - Highlight Correct vs Dim Incorrect */}
-                <div className="space-y-2 pt-1">
-                  <span className="text-xs font-mono font-bold uppercase text-emerald-400 tracking-wider block">
-                    Đối chiếu đáp án:
+                {/* Back Face: Display ONLY the Correct Answer */}
+                <div className="space-y-2.5 pt-1">
+                  <span className="text-xs font-mono font-bold uppercase text-emerald-500 dark:text-emerald-400 tracking-wider flex items-center gap-1.5">
+                    <CheckCircle2 className="size-4" />
+                    Đáp án chính xác:
                   </span>
-                  <div className="grid grid-cols-1 gap-2">
-                    {currentQ?.options.map((optionText, idx) => {
-                      const letter = String.fromCharCode(65 + idx);
-                      const isCorrect = isCorrectOption(idx);
-                      const viOption = showVi ? currentQ?.vi?.options?.[idx] : null;
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {currentQ?.options
+                      .map((optionText, idx) => ({ optionText, idx }))
+                      .filter(({ idx }) => isCorrectOption(idx))
+                      .map(({ optionText, idx }) => {
+                        const letter = String.fromCharCode(65 + idx);
+                        const viOption = showVi ? currentQ?.vi?.options?.[idx] : null;
 
-                      return (
-                        <div
-                          key={idx}
-                          className={`p-3 rounded-2xl border transition-all flex items-start gap-3 text-left ${
-                            isCorrect
-                              ? 'bg-emerald-500/15 border-emerald-500 text-foreground shadow-xs'
-                              : 'bg-muted/10 border-border/40 opacity-40'
-                          }`}
-                        >
-                          <span className={`size-6.5 rounded-lg font-mono font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs ${
-                            isCorrect ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'
-                          }`}>
-                            {letter}
-                          </span>
-                          <div className="space-y-0.5 text-xs sm:text-sm flex-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className={`font-bold leading-relaxed ${isCorrect ? 'text-emerald-400' : 'text-muted-foreground'}`}>
-                                {optionText}
-                              </p>
-                              {isCorrect && (
-                                <Badge variant="outline" className="text-[9.5px] border-emerald-500/40 text-emerald-400 shrink-0 font-bold">
-                                  ✓ CHUẨN
+                        return (
+                          <div
+                            key={idx}
+                            className="p-4 rounded-2xl border-2 border-emerald-500/80 bg-emerald-500/10 dark:bg-emerald-500/15 text-foreground shadow-md flex items-start gap-3.5 text-left transition-all animate-in zoom-in-95 duration-200"
+                          >
+                            <span className="size-8 rounded-xl font-mono font-extrabold text-sm flex items-center justify-center shrink-0 mt-0.5 shadow-xs bg-emerald-500 text-white">
+                              {letter}
+                            </span>
+                            <div className="space-y-1 text-sm sm:text-base flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="font-black text-emerald-600 dark:text-emerald-400 leading-relaxed">
+                                  {optionText}
+                                </p>
+                                <Badge variant="outline" className="text-[10px] bg-emerald-500/20 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 shrink-0 font-black uppercase">
+                                  ✓ ĐÁP ÁN ĐÚNG
                                 </Badge>
+                              </div>
+                              {viOption && (
+                                <p className="text-xs sm:text-sm leading-relaxed italic text-emerald-700/80 dark:text-emerald-300/80 pt-0.5">
+                                  {viOption}
+                                </p>
                               )}
                             </div>
-                            {viOption && (
-                              <p className={`text-xs leading-relaxed italic ${isCorrect ? 'text-emerald-300/80' : 'text-muted-foreground/60'}`}>
-                                {viOption}
-                              </p>
-                            )}
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </div>
 

@@ -39,7 +39,8 @@ import {
   Send,
   Crown,
   Trash2,
-  Bell
+  Bell,
+  Users
 } from 'lucide-react';
 import { toast } from '@/components/ui/toast';
 import { CURRENT_APP_VERSION } from '@/services/updateService';
@@ -48,10 +49,12 @@ import {
   sendSystemAnnouncement, 
   getActiveAnnouncements, 
   deactivateAnnouncement, 
+  getRegisteredUsers,
   ADMIN_EMAIL, 
   type SystemAnnouncement,
   type AnnouncementType,
-  type AnnouncementTarget
+  type AnnouncementTarget,
+  type RegisteredMember
 } from '@/services/announcementService';
 
 interface ProfileViewProps {
@@ -130,6 +133,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [isSendingAnnouncement, setIsSendingAnnouncement] = useState(false);
   const [activeAnnouncements, setActiveAnnouncements] = useState<SystemAnnouncement[]>([]);
   const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(false);
+
+  // List of registered members for targeted notification dropdown
+  const [registeredMembers, setRegisteredMembers] = useState<RegisteredMember[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
   // Load User Data
   useEffect(() => {
@@ -295,11 +302,26 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     }
   }, [user?.email]);
 
+  // Load all registered members for admin dropdown
+  const loadMembers = useCallback(async () => {
+    if (!isUserAdmin(user?.email)) return;
+    try {
+      setIsLoadingMembers(true);
+      const members = await getRegisteredUsers();
+      setRegisteredMembers(members);
+    } catch (err) {
+      console.warn('Failed to fetch registered members:', err);
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  }, [user?.email]);
+
   useEffect(() => {
     if (isAdmin) {
       refreshAnnouncements();
+      loadMembers();
     }
-  }, [isAdmin, refreshAnnouncements]);
+  }, [isAdmin, refreshAnnouncements, loadMembers]);
 
   // Handle Send System Announcement (Admin only)
   const handleSendAnnouncement = async (e: React.FormEvent) => {
@@ -851,11 +873,18 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               type="button"
               variant="outline"
               size="sm"
-              onClick={refreshAnnouncements}
-              disabled={isLoadingAnnouncements}
+              onClick={() => {
+                refreshAnnouncements();
+                loadMembers();
+              }}
+              disabled={isLoadingAnnouncements || isLoadingMembers}
               className="rounded-xl text-xs font-bold border-border hover:bg-muted"
             >
-              {isLoadingAnnouncements ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Radio className="size-3.5 text-amber-500 mr-1.5" />}
+              {isLoadingAnnouncements || isLoadingMembers ? (
+                <Loader2 className="size-3.5 animate-spin mr-1.5" />
+              ) : (
+                <Radio className="size-3.5 text-amber-500 mr-1.5" />
+              )}
               Làm mới danh sách
             </Button>
           </div>
@@ -885,31 +914,36 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       : 'bg-muted/40 text-muted-foreground border-border hover:text-foreground'
                   }`}
                 >
-                  🎯 Đích danh người dùng (Specific Email)
+                  🎯 Đích danh người dùng (Specific Member)
                 </button>
-
-                {adminTarget === 'specific' && (
-                  <button
-                    type="button"
-                    onClick={() => setAdminTargetEmail(ADMIN_EMAIL)}
-                    className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 cursor-pointer sm:ml-auto"
-                    title="Gán email admin để tự test nhận thông báo trên máy"
-                  >
-                    ⚡ Gán email Admin ({ADMIN_EMAIL}) để test
-                  </button>
-                )}
               </div>
 
               {adminTarget === 'specific' && (
-                <div className="pt-1">
-                  <input
-                    type="email"
-                    required
+                <div className="space-y-1.5 pt-2 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-foreground flex items-center gap-1.5">
+                      <Users className="size-3.5 text-primary" />
+                      Chọn thành viên nhận thông báo:
+                    </span>
+                    <span className="text-[11px] text-muted-foreground font-mono">
+                      {isLoadingMembers ? 'Đang tải danh sách...' : `${registeredMembers.length} thành viên khả dụng`}
+                    </span>
+                  </div>
+
+                  <select
                     value={adminTargetEmail}
                     onChange={(e) => setAdminTargetEmail(e.target.value)}
-                    placeholder="Nhập email người nhận (ví dụ: student@gmail.com)"
-                    className="w-full h-9 px-3 rounded-xl border border-border bg-background text-xs font-medium text-foreground focus:ring-1 focus:ring-primary focus:outline-hidden"
-                  />
+                    required
+                    className="w-full h-10 px-3.5 rounded-xl border border-border bg-background text-xs font-medium text-foreground focus:ring-1 focus:ring-primary focus:outline-hidden cursor-pointer"
+                  >
+                    <option value="">-- Chọn thành viên từ danh sách đã đăng ký --</option>
+                    {registeredMembers.map((member) => (
+                      <option key={member.uid} value={member.email}>
+                        {member.displayName} ({member.email})
+                        {member.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? ' • [Admin / Bạn]' : ''}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
             </div>
