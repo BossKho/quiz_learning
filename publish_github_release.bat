@@ -9,3 +9,4 @@ if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] Publishing GitHub Release failed.
 )
 pause
+
