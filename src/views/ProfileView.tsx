@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { User } from 'firebase/auth';
 import { 
   getCurrentUser, 
@@ -34,10 +34,25 @@ import {
   ArrowLeft, 
   Loader2, 
   Eye,
-  EyeOff
+  EyeOff,
+  Radio,
+  Send,
+  Crown,
+  Trash2,
+  Bell
 } from 'lucide-react';
 import { toast } from '@/components/ui/toast';
 import { CURRENT_APP_VERSION } from '@/services/updateService';
+import { 
+  isUserAdmin, 
+  sendSystemAnnouncement, 
+  getActiveAnnouncements, 
+  deactivateAnnouncement, 
+  ADMIN_EMAIL, 
+  type SystemAnnouncement,
+  type AnnouncementType,
+  type AnnouncementTarget
+} from '@/services/announcementService';
 
 interface ProfileViewProps {
   onBackToDashboard: () => void;
@@ -105,6 +120,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   // Activity Heatmap Data
   const [activityMap, setActivityMap] = useState<Record<string, { count: number; correct: number }>>({});
+
+  // Admin Announcement Center State (Hidden from regular accounts)
+  const isAdmin = useMemo(() => isUserAdmin(user?.email), [user?.email]);
+  const [adminMessage, setAdminMessage] = useState('');
+  const [adminTarget, setAdminTarget] = useState<AnnouncementTarget>('all');
+  const [adminTargetEmail, setAdminTargetEmail] = useState('');
+  const [adminType, setAdminType] = useState<AnnouncementType>('info');
+  const [isSendingAnnouncement, setIsSendingAnnouncement] = useState(false);
+  const [activeAnnouncements, setActiveAnnouncements] = useState<SystemAnnouncement[]>([]);
+  const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(false);
 
   // Load User Data
   useEffect(() => {
@@ -253,6 +278,73 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       onBackToDashboard();
     } catch {
       toast.error('Đăng xuất thất bại.');
+    }
+  };
+
+  // Refresh active announcements list (Admin only)
+  const refreshAnnouncements = useCallback(async () => {
+    if (!isUserAdmin(user?.email)) return;
+    try {
+      setIsLoadingAnnouncements(true);
+      const list = await getActiveAnnouncements();
+      setActiveAnnouncements(list);
+    } catch (err) {
+      console.warn('Failed to fetch announcements:', err);
+    } finally {
+      setIsLoadingAnnouncements(false);
+    }
+  }, [user?.email]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      refreshAnnouncements();
+    }
+  }, [isAdmin, refreshAnnouncements]);
+
+  // Handle Send System Announcement (Admin only)
+  const handleSendAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminMessage.trim()) {
+      toast.warning('Vui lòng nhập nội dung thông báo.');
+      return;
+    }
+    if (adminTarget === 'specific' && !adminTargetEmail.trim()) {
+      toast.warning('Vui lòng nhập email người nhận đích danh.');
+      return;
+    }
+
+    try {
+      setIsSendingAnnouncement(true);
+      await sendSystemAnnouncement({
+        message: adminMessage.trim(),
+        target: adminTarget,
+        targetEmail: adminTarget === 'specific' ? adminTargetEmail.trim() : null,
+        senderEmail: user?.email || ADMIN_EMAIL,
+        type: adminType,
+      });
+
+      toast.success(
+        adminTarget === 'all'
+          ? 'Đã phát sóng thông báo tới toàn bộ hệ thống! 📢'
+          : `Đã gửi thông báo đích danh tới ${adminTargetEmail}! 🎯`
+      );
+      setAdminMessage('');
+      await refreshAnnouncements();
+    } catch (err: any) {
+      toast.error('Lỗi gửi thông báo: ' + (err.message || String(err)));
+    } finally {
+      setIsSendingAnnouncement(false);
+    }
+  };
+
+  // Handle Deactivate Announcement (Admin only)
+  const handleDeactivateAnnouncement = async (id: string) => {
+    try {
+      await deactivateAnnouncement(id);
+      toast.success('Đã thu hồi thông báo thành công.');
+      await refreshAnnouncements();
+    } catch (err: any) {
+      toast.error('Lỗi thu hồi thông báo: ' + (err.message || String(err)));
     }
   };
 
@@ -731,6 +823,206 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* =========================================================================
+          ADMIN ONLY: TRUNG TÂM PHÁT SÓNG THÔNG BÁO TOÀN HỆ THỐNG
+         ========================================================================= */}
+      {isAdmin && (
+        <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-br from-card via-card to-amber-500/5 p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-xs">
+                <Crown className="size-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-black text-foreground">Trung Tâm Phát Sóng Thông Báo (Admin Privileges)</h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                    Chế độ Quản trị
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Gửi thông báo xuất hiện tức thời trên Notification Bar của người dùng khác hoặc chính bạn để kiểm thử.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={refreshAnnouncements}
+              disabled={isLoadingAnnouncements}
+              className="rounded-xl text-xs font-bold border-border hover:bg-muted"
+            >
+              {isLoadingAnnouncements ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Radio className="size-3.5 text-amber-500 mr-1.5" />}
+              Làm mới danh sách
+            </Button>
+          </div>
+
+          <form onSubmit={handleSendAnnouncement} className="space-y-4">
+            {/* Target Selection & Quick Test Buttons */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-foreground">Đối tượng nhận thông báo:</label>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAdminTarget('all')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                    adminTarget === 'all'
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'bg-muted/40 text-muted-foreground border-border hover:text-foreground'
+                  }`}
+                >
+                  🌐 Toàn bộ người dùng (All Users)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdminTarget('specific')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                    adminTarget === 'specific'
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'bg-muted/40 text-muted-foreground border-border hover:text-foreground'
+                  }`}
+                >
+                  🎯 Đích danh người dùng (Specific Email)
+                </button>
+
+                {adminTarget === 'specific' && (
+                  <button
+                    type="button"
+                    onClick={() => setAdminTargetEmail(ADMIN_EMAIL)}
+                    className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 cursor-pointer sm:ml-auto"
+                    title="Gán email admin để tự test nhận thông báo trên máy"
+                  >
+                    ⚡ Gán email Admin ({ADMIN_EMAIL}) để test
+                  </button>
+                )}
+              </div>
+
+              {adminTarget === 'specific' && (
+                <div className="pt-1">
+                  <input
+                    type="email"
+                    required
+                    value={adminTargetEmail}
+                    onChange={(e) => setAdminTargetEmail(e.target.value)}
+                    placeholder="Nhập email người nhận (ví dụ: student@gmail.com)"
+                    className="w-full h-9 px-3 rounded-xl border border-border bg-background text-xs font-medium text-foreground focus:ring-1 focus:ring-primary focus:outline-hidden"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Type Selection */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-foreground">Loại thông báo & Phong cách hiển thị:</label>
+              <div className="flex items-center gap-2">
+                {[
+                  { id: 'info', label: 'Thông Tin (Standard)' },
+                  { id: 'warning', label: 'Cảnh Báo (Warning)' },
+                  { id: 'urgent', label: 'Khẩn Cấp (Urgent)' },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setAdminType(t.id as AnnouncementType)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      adminType === t.id
+                        ? 'bg-primary text-white border-primary shadow-xs'
+                        : 'bg-muted/30 text-muted-foreground border-border hover:text-foreground'
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Message Textarea */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground">Nội dung văn bản thông báo:</label>
+              <textarea
+                required
+                rows={3}
+                value={adminMessage}
+                onChange={(e) => setAdminMessage(e.target.value)}
+                placeholder="Nhập nguyên văn thông báo sẽ hiển thị trực tiếp trên thanh thông báo ở máy người dùng..."
+                className="w-full p-3 rounded-xl border border-border bg-background text-xs font-medium text-foreground focus:ring-1 focus:ring-primary focus:outline-hidden resize-none"
+              />
+            </div>
+
+            {/* Send Button */}
+            <div className="flex items-center justify-end">
+              <Button
+                type="submit"
+                disabled={isSendingAnnouncement}
+                className="rounded-xl text-xs font-bold bg-primary text-white hover:opacity-95 cursor-pointer px-5"
+              >
+                {isSendingAnnouncement ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="size-3.5 animate-spin" /> Đang phát sóng...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Send className="size-3.5" /> Phát sóng thông báo ngay
+                  </span>
+                )}
+              </Button>
+            </div>
+          </form>
+
+          {/* Active Announcements List */}
+          {activeAnnouncements.length > 0 && (
+            <div className="pt-4 border-t border-border space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="text-foreground flex items-center gap-1.5">
+                  <Bell className="size-3.5 text-amber-500" />
+                  Các thông báo đang hiển thị trực tuyến ({activeAnnouncements.length}):
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {activeAnnouncements.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-3 rounded-2xl border border-border/80 bg-background flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-muted text-muted-foreground uppercase">
+                          {item.type}
+                        </span>
+                        <span className="text-[11px] font-bold text-primary">
+                          {item.target === 'all' ? '🌐 Toàn hệ thống' : `🎯 Đích danh: ${item.targetEmail}`}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          {new Date(item.createdAt).toLocaleTimeString('vi-VN')}
+                        </span>
+                      </div>
+                      <p className="font-medium text-foreground truncate select-text">
+                        {item.message}
+                      </p>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeactivateAnnouncement(item.id)}
+                      className="text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-xl text-xs font-bold cursor-pointer shrink-0"
+                      title="Thu hồi / Hủy phát sóng thông báo này"
+                    >
+                      <Trash2 className="size-3.5 mr-1" />
+                      Thu hồi
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* =========================================================================
           AVATAR PICKER MODAL (16 PRO CURATED AVATARS)

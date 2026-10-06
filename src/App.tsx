@@ -27,6 +27,8 @@ import { ProfileView } from '@/views/ProfileView';
 import { LandingPage } from '@/views/LandingPage';
 import { checkForAppUpdates, type UpdateInfo } from '@/services/updateService';
 import { UpdateModal } from '@/components/UpdateModal';
+import { NotificationBar } from '@/components/NotificationBar';
+import { subscribeToLiveAnnouncements, type SystemAnnouncement } from '@/services/announcementService';
 
 export function App() {
   // If running inside secondary native popup window, render BusyPopupWindow directly
@@ -72,6 +74,9 @@ export function App() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+
+  // Live Server Announcements Bar
+  const [liveAnnouncement, setLiveAnnouncement] = useState<SystemAnnouncement | null>(null);
 
   // Load data from SQLite
   const reloadData = useCallback(async () => {
@@ -129,6 +134,14 @@ export function App() {
     });
     return () => unsub();
   }, [reloadData]);
+
+  // Subscribe to Live Server Broadcast Announcements
+  useEffect(() => {
+    const unsub = subscribeToLiveAnnouncements(currentUser?.email, (ann) => {
+      setLiveAnnouncement(ann);
+    });
+    return () => unsub();
+  }, [currentUser?.email]);
 
   const handleQuickSync = async () => {
     if (!currentUser) {
@@ -429,6 +442,8 @@ export function App() {
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20">
+        <NotificationBar announcement={liveAnnouncement} currentUserEmail={null} />
+
         <LandingPage
           onOpenAuthModal={(mode) => {
             setAuthMode(mode);
@@ -455,6 +470,9 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20">
+      {/* Live Server Announcement Bar */}
+      <NotificationBar announcement={liveAnnouncement} currentUserEmail={currentUser?.email} />
+
       {/* Top Header - automatically visible on Dashboard, Explorer, Review; auto-hidden in Study/Exam/Flashcard */}
       {!isFocusArena && (
         <Header

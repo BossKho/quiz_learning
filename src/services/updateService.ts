@@ -3,7 +3,7 @@ import { syncCloudImmediate } from '@/services/firebaseService';
 import { isTauri, invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
-export const CURRENT_APP_VERSION = '1.3.0';
+export const CURRENT_APP_VERSION = '2.0.0';
 export const GITHUB_REPO_OWNER = 'BossKho';
 export const GITHUB_REPO_NAME = 'quiz_learning';
 

@@ -42,10 +42,10 @@ describe('updateService', () => {
   describe('checkForAppUpdates with mocked fetch', () => {
     it('detects available update correctly', async () => {
       const mockRelease = {
-        tag_name: 'v1.4.0',
-        name: 'Ver 1.4',
-        published_at: '2026-10-04T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.4.0',
+        tag_name: 'v2.1.0',
+        name: 'Ver 2.1',
+        published_at: '2026-10-07T12:00:00Z',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v2.1.0',
         body: 'Bug fixes and performance improvements',
         assets: [
           {
@@ -63,18 +63,18 @@ describe('updateService', () => {
 
       const update = await checkForAppUpdates();
       expect(update.hasUpdate).toBe(true);
-      expect(update.latestVersion).toBe('1.4.0');
+      expect(update.latestVersion).toBe('2.1.0');
       expect(update.setupAsset?.name).toBe('QuizLearningPro_Setup.exe');
       expect(update.setupAsset?.sizeFormatted).toBe('5.2 MB');
     });
 
     it('returns hasUpdate false when on latest version', async () => {
       const mockRelease = {
-        tag_name: 'v1.3.0',
-        name: 'Ver 1.3',
-        published_at: '2026-10-04T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.3.0',
-        body: 'Initial release',
+        tag_name: 'v2.0.0',
+        name: 'Ver 2.0',
+        published_at: '2026-10-07T12:00:00Z',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v2.0.0',
+        body: 'Official release',
         assets: [],
       };
 
@@ -90,10 +90,10 @@ describe('updateService', () => {
 
     it('extracts SHA-256 digest from asset when present', async () => {
       const mockReleaseWithDigest = {
-        tag_name: 'v1.4.0',
-        name: 'Ver 1.4',
-        published_at: '2026-10-04T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.4.0',
+        tag_name: 'v2.1.0',
+        name: 'Ver 2.1',
+        published_at: '2026-10-07T12:00:00Z',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v2.1.0',
         body: 'Release notes',
         assets: [
           {
@@ -116,10 +116,10 @@ describe('updateService', () => {
 
     it('extracts SHA-256 from release body when asset digest is missing', async () => {
       const mockReleaseWithBodyHash = {
-        tag_name: 'v1.4.0',
-        name: 'Ver 1.4',
-        published_at: '2026-10-04T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.4.0',
+        tag_name: 'v2.1.0',
+        name: 'Ver 2.1',
+        published_at: '2026-10-07T12:00:00Z',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v2.1.0',
         body: 'Release notes\nSHA-256: AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899\nThank you',
         assets: [
           {
