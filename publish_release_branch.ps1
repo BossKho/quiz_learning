@@ -15,7 +15,7 @@ Write-Host "  Updating clean release-exe branch (No source code)" -ForegroundCol
 Write-Host "========================================================" -ForegroundColor Cyan
 
 # 1. Read package version if available
-$version = "1.2.1"
+$version = "1.3.0"
 $packageJsonPath = Join-Path $scriptDir "package.json"
 if (Test-Path $packageJsonPath) {
     try {

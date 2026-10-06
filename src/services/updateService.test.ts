@@ -42,10 +42,10 @@ describe('updateService', () => {
   describe('checkForAppUpdates with mocked fetch', () => {
     it('detects available update correctly', async () => {
       const mockRelease = {
-        tag_name: 'v1.3.0',
-        name: 'Ver 1.3',
+        tag_name: 'v1.4.0',
+        name: 'Ver 1.4',
         published_at: '2026-10-04T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.3.0',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.4.0',
         body: 'Bug fixes and performance improvements',
         assets: [
           {
@@ -63,17 +63,17 @@ describe('updateService', () => {
 
       const update = await checkForAppUpdates();
       expect(update.hasUpdate).toBe(true);
-      expect(update.latestVersion).toBe('1.3.0');
+      expect(update.latestVersion).toBe('1.4.0');
       expect(update.setupAsset?.name).toBe('QuizLearningPro_Setup.exe');
       expect(update.setupAsset?.sizeFormatted).toBe('5.2 MB');
     });
 
     it('returns hasUpdate false when on latest version', async () => {
       const mockRelease = {
-        tag_name: 'v1.2.1',
-        name: 'Ver 1.21',
+        tag_name: 'v1.3.0',
+        name: 'Ver 1.3',
         published_at: '2026-10-04T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.2.1',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.3.0',
         body: 'Initial release',
         assets: [],
       };
