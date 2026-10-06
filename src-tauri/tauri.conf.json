@@ -50,6 +50,11 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }

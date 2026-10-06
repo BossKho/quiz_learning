@@ -24,3 +24,6 @@ log = "0.4"
 tauri = { version = "3.0.0-alpha.4", features = ["custom-protocol"] }
 tauri-runtime-wry = { version = "3.0.0-alpha.4" }
 tauri-plugin-log = "3.0.0-alpha.1"
+ureq = { version = "2.10", features = ["tls"] }
+sha2 = "0.10"
+hex = "0.4"

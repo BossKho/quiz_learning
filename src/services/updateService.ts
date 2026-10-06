@@ -1,6 +1,7 @@
 import { dbService } from '@/services/db';
 import { syncCloudImmediate } from '@/services/firebaseService';
 import { isTauri, invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 
 export const CURRENT_APP_VERSION = '1.3.0';
 export const GITHUB_REPO_OWNER = 'BossKho';
@@ -11,6 +12,7 @@ export interface ReleaseAsset {
   size: number;
   sizeFormatted: string;
   downloadUrl: string;
+  sha256?: string;
 }
 
 export interface UpdateInfo {
@@ -25,10 +27,24 @@ export interface UpdateInfo {
   setupAsset?: ReleaseAsset;
 }
 
+export interface DownloadProgress {
+  downloaded: number;
+  total: number;
+  percent: number;
+  downloadedFormatted: string;
+  totalFormatted: string;
+}
+
+export interface InAppDownloadResult {
+  installerPath: string;
+  sha256: string;
+  totalBytes: number;
+}
+
 /**
  * Format bytes to readable string (e.g. 5.5 MB)
  */
-function formatFileSize(bytes: number): string {
+export function formatFileSize(bytes: number): string {
   if (!bytes || isNaN(bytes)) return '';
   const mb = bytes / (1024 * 1024);
   return `${mb.toFixed(1)} MB`;
@@ -171,15 +187,30 @@ export async function checkForAppUpdates(): Promise<UpdateInfo> {
   if (Array.isArray(releaseData.assets)) {
     for (const asset of releaseData.assets) {
       const assetName = asset.name?.toLowerCase() || '';
-      const assetObj: ReleaseAsset = {
-        name: asset.name,
-        size: asset.size,
-        sizeFormatted: formatFileSize(asset.size),
-        downloadUrl: asset.browser_download_url,
-      };
 
       if (assetName.includes('setup') || assetName.endsWith('.exe')) {
-        setupAsset = assetObj;
+        let sha256: string | undefined;
+
+        // Check digest on asset
+        if (asset.digest && typeof asset.digest === 'string' && asset.digest.toLowerCase().startsWith('sha256:')) {
+          sha256 = asset.digest.substring(7).trim().toUpperCase();
+        }
+
+        // Fallback: scan release body for SHA-256 pattern
+        if (!sha256 && releaseData.body) {
+          const match = releaseData.body.match(/sha-?256[:\s]+([a-fA-F0-9]{64})/i);
+          if (match) {
+            sha256 = match[1].toUpperCase();
+          }
+        }
+
+        setupAsset = {
+          name: asset.name,
+          size: asset.size,
+          sizeFormatted: formatFileSize(asset.size),
+          downloadUrl: asset.browser_download_url,
+          sha256,
+        };
         break;
       }
     }
@@ -218,3 +249,69 @@ export async function executePreUpdateShield(uid?: string | null): Promise<boole
   }
 }
 
+/**
+ * Listen to real-time download progress events emitted by native Rust
+ */
+export async function listenToDownloadProgress(
+  callback: (progress: DownloadProgress) => void
+): Promise<() => void> {
+  if (!isTauri()) {
+    return () => {};
+  }
+  try {
+    const unlisten = await listen<{ downloaded: number; total: number; percent: number }>(
+      'update-download-progress',
+      (event) => {
+        const p = event.payload;
+        callback({
+          downloaded: p.downloaded,
+          total: p.total,
+          percent: Math.round(p.percent * 10) / 10,
+          downloadedFormatted: formatFileSize(p.downloaded),
+          totalFormatted: formatFileSize(p.total),
+        });
+      }
+    );
+    return unlisten;
+  } catch (err) {
+    console.warn('Failed to attach update-download-progress listener:', err);
+    return () => {};
+  }
+}
+
+/**
+ * Download update installer directly in app and verify SHA-256 checksum
+ */
+export async function startInAppDownload(
+  downloadUrl: string,
+  expectedSha256?: string
+): Promise<InAppDownloadResult> {
+  if (!isTauri()) {
+    throw new Error('Tính năng tải cập nhật tự động yêu cầu ứng dụng Desktop.');
+  }
+
+  const result = await invoke<{ installer_path: string; sha256: string; total_bytes: number }>(
+    'download_update_with_progress',
+    {
+      url: downloadUrl,
+      expectedSha256: expectedSha256 || null,
+    }
+  );
+
+  return {
+    installerPath: result.installer_path,
+    sha256: result.sha256,
+    totalBytes: result.total_bytes,
+  };
+}
+
+/**
+ * Launch independent updater helper process and cleanly exit current process
+ */
+export async function launchInstallerAndExit(installerPath: string): Promise<void> {
+  if (!isTauri()) {
+    throw new Error('Tính năng cập nhật tự động yêu cầu ứng dụng Desktop.');
+  }
+
+  await invoke('launch_updater_and_exit', { installerPath });
+}

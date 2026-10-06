@@ -60,12 +60,18 @@ if (-not (Test-Path $setupFile)) {
 
 $fileItem = Get-Item $setupFile
 $fileSizeMb = [math]::Round($fileItem.Length / 1MB, 2)
+$sha256 = (Get-FileHash $setupFile -Algorithm SHA256).Hash.ToUpper()
+
+# Tao file checksum sha256
+$sha256File = Join-Path $scriptDir "QuizLearningPro_Setup.exe.sha256"
+Set-Content -Path $sha256File -Value "$sha256  QuizLearningPro_Setup.exe" -Encoding ASCII
 
 Write-Host ""
 Write-Host "Thong tin phat hanh:" -ForegroundColor Cyan
 Write-Host "  - Phien ban : $version (Tag: $tag)" -ForegroundColor White
 Write-Host "  - Tieu de   : $releaseTitle" -ForegroundColor White
 Write-Host "  - File setup: QuizLearningPro_Setup.exe ($fileSizeMb MB)" -ForegroundColor White
+Write-Host "  - SHA-256   : $sha256" -ForegroundColor White
 Write-Host ""
 
 # 4. Kiem tra file notes
@@ -80,10 +86,10 @@ Write-Host "Dang tao GitHub Release va upload QuizLearningPro_Setup.exe..." -For
 cmd.exe /c "gh release view $tag >nul 2>&1"
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Release $tag da ton tai tren GitHub. Dang cap nhat file asset..." -ForegroundColor Yellow
-    gh release upload $tag "QuizLearningPro_Setup.exe" --clobber
+    gh release upload $tag "QuizLearningPro_Setup.exe" "$sha256File" --clobber
     gh release edit $tag --title $releaseTitle --notes-file $notesFile
 } else {
-    gh release create $tag "QuizLearningPro_Setup.exe" --title $releaseTitle --notes-file $notesFile
+    gh release create $tag "QuizLearningPro_Setup.exe" "$sha256File" --title $releaseTitle --notes-file $notesFile
 }
 
 if ($LASTEXITCODE -eq 0) {

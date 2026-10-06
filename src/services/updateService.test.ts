@@ -87,5 +87,56 @@ describe('updateService', () => {
       expect(update.hasUpdate).toBe(false);
       expect(update.currentVersion).toBe(CURRENT_APP_VERSION);
     });
+
+    it('extracts SHA-256 digest from asset when present', async () => {
+      const mockReleaseWithDigest = {
+        tag_name: 'v1.4.0',
+        name: 'Ver 1.4',
+        published_at: '2026-10-04T12:00:00Z',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.4.0',
+        body: 'Release notes',
+        assets: [
+          {
+            name: 'QuizLearningPro_Setup.exe',
+            size: 5467534,
+            browser_download_url: 'https://github.com/.../QuizLearningPro_Setup.exe',
+            digest: 'sha256:b4ab04e063c66d83f6448edd17f9133a61b09d6d720a366b461950637fb6a6e5',
+          },
+        ],
+      };
+
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockReleaseWithDigest,
+      }));
+
+      const update = await checkForAppUpdates();
+      expect(update.setupAsset?.sha256).toBe('B4AB04E063C66D83F6448EDD17F9133A61B09D6D720A366B461950637FB6A6E5');
+    });
+
+    it('extracts SHA-256 from release body when asset digest is missing', async () => {
+      const mockReleaseWithBodyHash = {
+        tag_name: 'v1.4.0',
+        name: 'Ver 1.4',
+        published_at: '2026-10-04T12:00:00Z',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v1.4.0',
+        body: 'Release notes\nSHA-256: AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899\nThank you',
+        assets: [
+          {
+            name: 'QuizLearningPro_Setup.exe',
+            size: 5467534,
+            browser_download_url: 'https://github.com/.../QuizLearningPro_Setup.exe',
+          },
+        ],
+      };
+
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockReleaseWithBodyHash,
+      }));
+
+      const update = await checkForAppUpdates();
+      expect(update.setupAsset?.sha256).toBe('AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899');
+    });
   });
 });

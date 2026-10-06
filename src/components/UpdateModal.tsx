@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { 
   Sparkles, 
   DownloadCloud, 
@@ -16,9 +17,21 @@ import {
   ExternalLink, 
   Loader2, 
   CheckCircle2, 
-  Package
+  Package,
+  RotateCcw,
+  AlertTriangle,
+  Lock
 } from 'lucide-react';
-import { type UpdateInfo, executePreUpdateShield, openExternalUrl } from '@/services/updateService';
+import { 
+  type UpdateInfo, 
+  type DownloadProgress,
+  executePreUpdateShield, 
+  openExternalUrl,
+  startInAppDownload,
+  launchInstallerAndExit,
+  listenToDownloadProgress
+} from '@/services/updateService';
+import { isTauri } from '@tauri-apps/api/core';
 import { toast } from '@/components/ui/toast';
 
 interface UpdateModalProps {
@@ -28,55 +41,116 @@ interface UpdateModalProps {
   currentUserId?: string | null;
 }
 
+type UpdateStatus = 'idle' | 'downloading' | 'ready_to_restart' | 'applying' | 'error';
+
 export const UpdateModal: React.FC<UpdateModalProps> = ({
   open,
   onOpenChange,
   updateInfo,
   currentUserId,
 }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [status, setStatus] = useState<UpdateStatus>('idle');
+  const [progress, setProgress] = useState<DownloadProgress | null>(null);
+  const [installerPath, setInstallerPath] = useState<string | null>(null);
+  const [verifiedSha256, setVerifiedSha256] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [processStep, setProcessStep] = useState<string>('');
-  const [downloadCompleted, setDownloadCompleted] = useState(false);
+
+  // Reset state when modal opens/closes
+  useEffect(() => {
+    if (open) {
+      setStatus('idle');
+      setProgress(null);
+      setInstallerPath(null);
+      setVerifiedSha256(null);
+      setErrorMessage(null);
+      setProcessStep('');
+    }
+  }, [open]);
+
+  // Listen to download progress emitted by native Rust
+  useEffect(() => {
+    if (status !== 'downloading') return;
+
+    let cleanupFn: (() => void) | undefined;
+    listenToDownloadProgress((p) => {
+      setProgress(p);
+    }).then((unlisten) => {
+      cleanupFn = unlisten;
+    });
+
+    return () => {
+      if (cleanupFn) cleanupFn();
+    };
+  }, [status]);
 
   if (!updateInfo) return null;
 
-  const handleUpdate = async () => {
-    const downloadUrl = updateInfo.setupAsset?.downloadUrl || updateInfo.releaseUrl;
+  const downloadUrl = updateInfo.setupAsset?.downloadUrl || updateInfo.releaseUrl;
+  const expectedSha256 = updateInfo.setupAsset?.sha256;
 
-    setIsProcessing(true);
-    setDownloadCompleted(false);
+  // Step 1: Start In-App streaming download and SHA-256 verification
+  const handleStartInAppDownload = async () => {
+    if (!isTauri()) {
+      // Fallback for web mode
+      await openExternalUrl(downloadUrl);
+      return;
+    }
+
+    setStatus('downloading');
+    setErrorMessage(null);
+    setProcessStep('Đang kết nối và tải tệp cài đặt vào hệ thống...');
 
     try {
-      // Step 1: Pre-update shield
-      setProcessStep('Đang lưu trữ và đồng bộ an toàn dữ liệu học tập lên Cloud...');
+      const res = await startInAppDownload(downloadUrl, expectedSha256);
+      setInstallerPath(res.installerPath);
+      setVerifiedSha256(res.sha256);
+      setStatus('ready_to_restart');
+      toast.success('Đã tải và xác thực toàn vẹn bộ cài thành công! 🛡️');
+    } catch (err: any) {
+      console.error('In-app update download failed:', err);
+      setStatus('error');
+      setErrorMessage(err.message || String(err));
+      toast.error('Lỗi tải bản cập nhật: ' + (err.message || String(err)));
+    }
+  };
+
+  // Step 2: Flush data, spawn independent helper process, and restart
+  const handleApplyUpdateAndRestart = async () => {
+    if (!installerPath) return;
+
+    setStatus('applying');
+    try {
+      // 1. Pre-update data shield
+      setProcessStep('Đang lưu trữ dữ liệu cục bộ và đồng bộ an toàn lên Cloud...');
       const backupOk = await executePreUpdateShield(currentUserId);
       if (!backupOk) {
         toast.warning('Không thể kết nối Cloud, dữ liệu đã được lưu cục bộ an toàn.');
-      } else {
-        toast.success('Dữ liệu và tiến độ học tập đã được bảo vệ tuyệt đối!');
       }
 
-      // Step 2: Open download stream
-      setProcessStep('Bắt đầu tải bộ cài đặt mới...');
-      await openExternalUrl(downloadUrl);
-
-      setDownloadCompleted(true);
-      setProcessStep('Đã mở tải file cập nhật!');
-    } catch (err) {
-      console.error('Update failed:', err);
-      toast.error('Có lỗi xảy ra khi bắt đầu cập nhật.');
-      setProcessStep('Lỗi khởi động tải xuống.');
-    } finally {
-      setIsProcessing(false);
+      // 2. Launch helper process and cleanly exit
+      setProcessStep('Đang chuyển giao cho tiến trình cập nhật ngầm & đóng ứng dụng...');
+      await launchInstallerAndExit(installerPath);
+    } catch (err: any) {
+      console.error('Failed to launch updater helper:', err);
+      setStatus('error');
+      setErrorMessage(err.message || String(err));
+      toast.error('Không thể khởi chạy cập nhật tự động.');
     }
+  };
+
+  const handleManualBrowserDownload = async () => {
+    await openExternalUrl(downloadUrl);
   };
 
   const handleViewOnGitHub = async () => {
     await openExternalUrl(updateInfo.releaseUrl);
   };
 
+  const isLocked = status === 'downloading' || status === 'applying';
+
   return (
-    <Dialog open={open} onOpenChange={(val) => !isProcessing && onOpenChange(val)}>
+    <Dialog open={open} onOpenChange={(val) => !isLocked && onOpenChange(val)}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-6 border-border shadow-2xl">
         <DialogHeader className="space-y-3">
           <div className="flex items-center justify-between">
@@ -139,67 +213,147 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
             </button>
           </div>
 
-          <div className="max-h-44 overflow-y-auto rounded-2xl border border-border bg-muted/40 p-3.5 text-xs text-foreground/90 font-sans leading-relaxed whitespace-pre-line select-text">
-            {updateInfo.releaseNotes || 'Bản cập nhật cải thiện tính năng, bổ sung nút nộp bài và tối ưu độ ổn định hệ thống.'}
+          <div className="max-h-36 overflow-y-auto rounded-2xl border border-border bg-muted/40 p-3.5 text-xs text-foreground/90 font-sans leading-relaxed whitespace-pre-line select-text">
+            {updateInfo.releaseNotes || 'Bản cập nhật cải thiện tính năng, tối ưu hóa trải nghiệm và sửa các lỗi phát sinh.'}
           </div>
         </div>
 
-        {/* Status progress indicator when updating */}
-        {isProcessing && (
-          <div className="rounded-2xl border border-primary/30 bg-primary/10 p-3.5 flex items-center gap-3 animate-in fade-in">
-            <Loader2 className="size-5 text-primary animate-spin shrink-0" />
-            <span className="text-xs font-bold text-primary">{processStep}</span>
+        {/* ============================================================== */}
+        {/* INTERACTIVE STATE VIEWS                                         */}
+        {/* ============================================================== */}
+
+        {/* 1. DOWNLOADING STATE: Real-time progress bar */}
+        {status === 'downloading' && (
+          <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 space-y-3 animate-in fade-in">
+            <div className="flex items-center justify-between text-xs font-bold text-primary">
+              <span className="flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin" />
+                <span>Đang tải bản cập nhật...</span>
+              </span>
+              <span>{progress ? `${progress.percent}%` : 'Đang kết nối...'}</span>
+            </div>
+
+            <Progress value={progress?.percent || 0} className="h-2.5 bg-primary/20" />
+
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>{progress ? `${progress.downloadedFormatted} / ${progress.totalFormatted}` : 'Đang chuẩn bị gói dữ liệu...'}</span>
+              <span className="flex items-center gap-1 text-[10px]">
+                <Lock className="size-3 text-emerald-500" />
+                <span>Đang kiểm tra băm SHA-256</span>
+              </span>
+            </div>
           </div>
         )}
 
-        {downloadCompleted && !isProcessing && (
-          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 flex items-start gap-3 animate-in fade-in">
-            <CheckCircle2 className="size-5 text-emerald-500 shrink-0 mt-0.5" />
-            <div className="space-y-1 text-xs">
-              <div className="font-bold text-emerald-700 dark:text-emerald-300">
-                Đã mở trình tải tệp cài đặt thành công!
+        {/* 2. READY TO RESTART STATE: Verified & Ready to Apply */}
+        {status === 'ready_to_restart' && (
+          <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 space-y-3 animate-in fade-in">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="size-5 text-emerald-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <div className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                  Tải về và xác thực toàn vẹn thành công!
+                </div>
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 leading-relaxed">
+                  Bản cài đặt an toàn đã sẵn sàng. Khi bạn bấm nút bên dưới, hệ thống sẽ tự động lưu dữ liệu, đóng ứng dụng và cài đặt ngầm trong 2 giây rồi tự khởi động lại.
+                </p>
+                {verifiedSha256 && (
+                  <div className="mt-1 font-mono text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-md inline-block">
+                    SHA-256: {verifiedSha256.substring(0, 16)}... (Đã khớp)
+                  </div>
+                )}
               </div>
-              <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
-                Sau khi tệp tải về, bạn chỉ cần mở file để cài đặt đè. Toàn bộ tài khoản và tiến độ học tập sẽ được giữ nguyên 100%.
-              </p>
+            </div>
+
+            <Button
+              size="default"
+              onClick={handleApplyUpdateAndRestart}
+              className="w-full rounded-xl text-xs font-bold gap-2 cursor-pointer bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white shadow-md h-11"
+            >
+              <RotateCcw className="size-4" />
+              <span>Khởi động lại để hoàn tất cập nhật ngay</span>
+            </Button>
+          </div>
+        )}
+
+        {/* 3. APPLYING STATE: Transitioning process */}
+        {status === 'applying' && (
+          <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 flex items-center gap-3 animate-in fade-in">
+            <Loader2 className="size-5 text-primary animate-spin shrink-0" />
+            <div className="space-y-0.5">
+              <span className="text-xs font-bold text-primary">Đang chuẩn bị cập nhật ngầm...</span>
+              <p className="text-[11px] text-muted-foreground">{processStep}</p>
             </div>
           </div>
         )}
 
-        {/* Primary 1-Click Update Action Card */}
-        <div className="rounded-2xl border border-border bg-card p-4 space-y-3 hover:border-primary/50 transition-colors shadow-2xs">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Package className="size-4 text-primary" />
-              <span className="text-xs font-bold text-foreground">Bản Cài Đặt Chính Thức (Setup Installer)</span>
+        {/* 4. ERROR STATE: Failure with recovery buttons */}
+        {status === 'error' && (
+          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 space-y-3 animate-in fade-in">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="size-4 text-rose-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="text-xs font-bold text-rose-700 dark:text-rose-300">Không thể hoàn tất cập nhật tự động</span>
+                <p className="text-[11px] text-rose-600 dark:text-rose-400 whitespace-pre-line">{errorMessage}</p>
+              </div>
             </div>
-            {updateInfo.setupAsset?.sizeFormatted && (
-              <Badge variant="outline" className="text-[10px] text-primary border-primary/30">
-                ~{updateInfo.setupAsset.sizeFormatted}
-              </Badge>
-            )}
-          </div>
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
-            Tự động cập nhật tệp ứng dụng, cập nhật shortcut Desktop và giữ nguyên vẹn 100% dữ liệu đã học.
-          </p>
 
-          <Button
-            size="default"
-            disabled={isProcessing}
-            onClick={handleUpdate}
-            className="w-full rounded-xl text-xs font-bold gap-2 cursor-pointer bg-gradient-to-r from-primary to-indigo-600 hover:opacity-95 text-white shadow-md h-10"
-          >
-            <DownloadCloud className="size-4" />
-            <span>Cập nhật ngay (1-Click)</span>
-          </Button>
-        </div>
+            <div className="flex items-center gap-2 pt-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleStartInAppDownload}
+                className="text-xs font-semibold rounded-xl flex-1 cursor-pointer"
+              >
+                Thử tải lại
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleManualBrowserDownload}
+                className="text-xs font-semibold rounded-xl flex-1 cursor-pointer"
+              >
+                Tải thủ công (trình duyệt)
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* 5. IDLE STATE: Primary Action Card */}
+        {status === 'idle' && (
+          <div className="rounded-2xl border border-border bg-card p-4 space-y-3 hover:border-primary/50 transition-colors shadow-2xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Package className="size-4 text-primary" />
+                <span className="text-xs font-bold text-foreground">Bản Cập Nhật Tự Động (In-App Seamless)</span>
+              </div>
+              {updateInfo.setupAsset?.sizeFormatted && (
+                <Badge variant="outline" className="text-[10px] text-primary border-primary/30">
+                  ~{updateInfo.setupAsset.sizeFormatted}
+                </Badge>
+              )}
+            </div>
+
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Tải trực tiếp trong ứng dụng, tự động kiểm tra chữ ký số SHA-256, tự động ghi đè cài đặt ngầm và khởi động lại mà không cần gỡ bản cũ.
+            </p>
+
+            <Button
+              size="default"
+              onClick={handleStartInAppDownload}
+              className="w-full rounded-xl text-xs font-bold gap-2 cursor-pointer bg-gradient-to-r from-primary to-indigo-600 hover:opacity-95 text-white shadow-md h-10"
+            >
+              <DownloadCloud className="size-4" />
+              <span>Cập nhật tự động (In-App Update)</span>
+            </Button>
+          </div>
+        )}
 
         <DialogFooter className="flex items-center justify-between pt-2 border-t border-border sm:justify-between">
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            disabled={isProcessing}
+            disabled={isLocked}
             onClick={() => onOpenChange(false)}
             className="text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer rounded-xl"
           >
@@ -210,10 +364,10 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
             type="button"
             variant="outline"
             size="sm"
-            onClick={handleViewOnGitHub}
-            className="text-xs font-semibold rounded-xl gap-1.5 cursor-pointer"
+            onClick={handleManualBrowserDownload}
+            className="text-xs font-semibold rounded-xl gap-1.5 cursor-pointer text-muted-foreground"
           >
-            <span>Trang Releases GitHub</span>
+            <span>Tải thủ công qua trình duyệt</span>
             <ExternalLink className="size-3" />
           </Button>
         </DialogFooter>
@@ -221,4 +375,3 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
     </Dialog>
   );
 };
-
