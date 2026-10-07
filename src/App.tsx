@@ -13,7 +13,6 @@ import { DeckExplorer } from '@/views/DeckExplorer';
 import { FlashcardArena } from '@/views/FlashcardArena';
 import { SyncProgressModal } from '@/components/SyncProgressModal';
 import { ToastContainer, toast } from '@/components/ui/toast';
-import { BusyPopupWindow } from '@/views/BusyPopupWindow';
 import { BusyPopup } from '@/components/BusyPopup';
 import { BusyModeModal } from '@/components/BusyModeModal';
 import { busyModeService, type BusyModeState } from '@/services/busyModeService';
@@ -31,12 +30,6 @@ import { NotificationBar } from '@/components/NotificationBar';
 import { subscribeToLiveAnnouncements, type SystemAnnouncement } from '@/services/announcementService';
 
 export function App() {
-  // If running inside secondary native popup window, render BusyPopupWindow directly
-  const isBusyPopupWindow = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('window') === 'busy_popup';
-  if (isBusyPopupWindow) {
-    return <BusyPopupWindow />;
-  }
-
   const [isDbReady, setIsDbReady] = useState(false);
   const [currentView, setCurrentView] = useState<'dashboard' | 'study' | 'exam' | 'review' | 'explorer' | 'flashcard' | 'profile'>('dashboard');
   const [currentUser, setCurrentUser] = useState<User | null>(null);

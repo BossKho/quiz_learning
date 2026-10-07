@@ -337,9 +337,20 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
     );
   }
 
+  if (!currentQ) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="text-base font-bold">Không tìm thấy câu hỏi nào trong phiên này.</div>
+        <Button variant="default" onClick={onExit} className="rounded-xl">
+          <ArrowLeft className="size-4 mr-2" /> Về Trang chủ
+        </Button>
+      </div>
+    );
+  }
+
   // Answer indices check helper
   const isCorrectOption = (idx: number) => {
-    return currentQ?.answer.includes(idx) ?? false;
+    return currentQ?.answer?.includes(idx) ?? false;
   };
 
   return (
@@ -479,7 +490,7 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
                     Các lựa chọn đáp án:
                   </span>
                   <div className="grid grid-cols-1 gap-2">
-                    {currentQ?.options.map((optionText, idx) => {
+                    {(currentQ?.options || []).map((optionText, idx) => {
                       const letter = String.fromCharCode(65 + idx);
                       const viOption = showVi ? currentQ?.vi?.options?.[idx] : null;
                       return (
@@ -541,7 +552,7 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
                     Đáp án chính xác:
                   </span>
                   <div className="grid grid-cols-1 gap-2.5">
-                    {currentQ?.options
+                    {(currentQ?.options || [])
                       .map((optionText, idx) => ({ optionText, idx }))
                       .filter(({ idx }) => isCorrectOption(idx))
                       .map(({ optionText, idx }) => {

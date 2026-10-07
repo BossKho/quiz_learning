@@ -18,6 +18,19 @@ const IDB_NAME = 'QuizPlatformDB';
 const IDB_STORE = 'sqlite_snapshots';
 const IDB_KEY = 'latest_db';
 
+/**
+ * An toàn phân tích cú pháp JSON để chống crash toàn app nếu DB snapshot có trường bị hỏng
+ */
+export function safeJsonParse<T>(jsonStr: any, fallback: T): T {
+  if (!jsonStr || typeof jsonStr !== 'string') return fallback;
+  try {
+    return JSON.parse(jsonStr);
+  } catch (err) {
+    console.warn('[db] Error parsing JSON field, safely falling back:', err);
+    return fallback;
+  }
+}
+
 // Simple lightweight IndexedDB wrapper for binary SQLite storage
 function openIDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -1400,15 +1413,15 @@ class DatabaseManager {
       deck_id: row.deck_id as string,
       type: (row.type as 'single' | 'multi') || 'single',
       question: row.question as string,
-      options: JSON.parse(row.options_json || '[]'),
-      answer: JSON.parse(row.answer_json || '[]'),
+      options: safeJsonParse(row.options_json, []),
+      answer: safeJsonParse(row.answer_json, []),
       explanation: (row.explanation as string) || '',
       note: (row.note as string) || '',
       answer_source: (row.answer_source as string) || '',
       shuffle_options: Boolean(row.shuffle_options),
       vi: {
         question: (row.vi_question as string) || '',
-        options: JSON.parse(row.vi_options_json || '[]'),
+        options: safeJsonParse(row.vi_options_json, []),
       },
       stats: {
         question_id: row.id as string,
@@ -1433,9 +1446,9 @@ class DatabaseManager {
       total_questions: row.total_questions as number,
       time_limit_sec: (row.time_limit_sec as number) || 0,
       time_remaining_sec: (row.time_remaining_sec as number) || 0,
-      question_ids: JSON.parse(row.question_ids_json || '[]'),
-      user_answers: JSON.parse(row.user_answers_json || '{}'),
-      flagged_ids: JSON.parse(row.flagged_ids_json || '[]'),
+      question_ids: safeJsonParse(row.question_ids_json, []),
+      user_answers: safeJsonParse(row.user_answers_json, {}),
+      flagged_ids: safeJsonParse(row.flagged_ids_json, []),
       is_completed: Boolean(row.is_completed),
       score: row.score as number,
       created_at: row.created_at as number,
