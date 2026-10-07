@@ -26,6 +26,8 @@ import {
   List,
   SlidersHorizontal,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   FileText,
   Award,
   Zap,
@@ -56,6 +58,7 @@ interface DashboardProps {
   onResumeSession: (session: ActiveSession) => void;
   onRestartSession: (deck: Deck, mode: 'study' | 'exam') => void;
   onDeleteSession: (sessionId: string) => void;
+  onStartWrongQuestionsSession?: (deckId: string, deckTitle: string, wrongQuestions: Question[]) => void;
   onOpenExplorer: (filter?: SearchFilter) => void;
   onStartFlashcard: (questions: Question[], title: string) => void;
   onStartCustomSession: (questions: Question[], mode: 'study' | 'exam', title: string, timeLimitSec: number) => void;
@@ -77,6 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onResumeSession,
   onRestartSession,
   onDeleteSession,
+  onStartWrongQuestionsSession,
   onResetDeckProgress,
   onOpenExplorer,
   onStartFlashcard,
@@ -107,8 +111,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [searchFilter, setSearchFilter] = useState('');
 
-  // Selected Deck for Action Modal
+  // Unfinished sessions dropdown toggle & confirmation modal
+  const [isUnfinishedExpanded, setIsUnfinishedExpanded] = useState(true);
+  const [sessionToDelete, setSessionToDelete] = useState<ActiveSession | null>(null);
+
+  // Selected Deck for Action Modal & wrong questions
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
+  const [selectedDeckWrongQuestions, setSelectedDeckWrongQuestions] = useState<Question[]>([]);
+
+  // Load wrong questions whenever selectedDeck changes
+  useEffect(() => {
+    if (!selectedDeck) {
+      setSelectedDeckWrongQuestions([]);
+      return;
+    }
+    dbService.getDeckWrongQuestions(selectedDeck.id).then((wrongQs) => {
+      setSelectedDeckWrongQuestions(wrongQs);
+    }).catch((err) => {
+      console.error('Failed to get deck wrong questions:', err);
+      setSelectedDeckWrongQuestions([]);
+    });
+  }, [selectedDeck]);
 
   // Active session for selected deck
   const activeSessionForSelected = useMemo(() => {
@@ -464,85 +487,170 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </Card>
       </div>
 
-      {/* Unfinished Session Alert Banner */}
+      {/* Unfinished Sessions Dropdown / Collapsible List */}
       {unfinishedSessions.length > 0 && (
-        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
-          <div className="flex items-start gap-3.5">
-            <div className={`p-2.5 rounded-xl mt-0.5 shadow-2xs ${
-              unfinishedSessions[0].mode === 'flashcard' 
-                ? 'bg-amber-500/20 text-amber-500' 
-                : unfinishedSessions[0].mode === 'exam'
-                ? 'bg-rose-500/20 text-rose-500'
-                : 'bg-primary/20 text-primary'
-            }`}>
-              <RotateCcw className="size-4 animate-spin-reverse" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-foreground flex items-center gap-2">
-                {unfinishedSessions[0].mode === 'flashcard'
-                  ? 'Tiếp tục phiên lật thẻ Flashcard dở dang'
-                  : unfinishedSessions[0].mode === 'exam'
-                  ? 'Tiếp tục bài thi thử dở dang'
-                  : 'Tiếp tục phiên học tập dở dang'}
-                <Badge 
-                  variant={
-                    unfinishedSessions[0].mode === 'exam' 
-                      ? 'warning' 
-                      : unfinishedSessions[0].mode === 'flashcard'
-                      ? 'secondary'
-                      : 'info'
-                  } 
-                  className={`text-[10px] uppercase font-mono px-2 py-0.2 ${
-                    unfinishedSessions[0].mode === 'flashcard'
-                      ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
-                      : ''
-                  }`}
-                >
-                  {unfinishedSessions[0].mode === 'exam' 
-                    ? 'Thi thử' 
-                    : unfinishedSessions[0].mode === 'flashcard' 
-                    ? 'Flashcard' 
-                    : 'Học tập'}
-                </Badge>
+        <div className="rounded-2xl border border-primary/30 bg-primary/5 overflow-hidden shadow-xs transition-all">
+          {/* Header Bar with Toggle */}
+          <div 
+            onClick={() => setIsUnfinishedExpanded((prev) => !prev)}
+            className="p-4 sm:p-4.5 flex items-center justify-between cursor-pointer hover:bg-primary/10 transition-colors select-none"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/20 text-primary shadow-2xs">
+                <RotateCcw className="size-4 animate-spin-reverse" />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Bộ đề: <span className="font-semibold text-foreground">{unfinishedSessions[0].deck_title}</span> • 
-                Đang ở {unfinishedSessions[0].mode === 'flashcard' ? 'thẻ' : 'câu'}{' '}
-                <span className="font-bold text-primary">{unfinishedSessions[0].current_index + 1}</span> / {unfinishedSessions[0].total_questions}
-              </p>
+              <div>
+                <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <span>Phiên học tập dở dang</span>
+                  <Badge variant="info" className="text-[10px] font-mono px-2 py-0.2">
+                    {unfinishedSessions.length} phiên
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Nhấn để {isUnfinishedExpanded ? 'thu gọn' : 'xổ xuống danh sách'} các phiên đang học dở dang
+                </p>
+              </div>
             </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-8 p-0 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              {isUnfinishedExpanded ? (
+                <ChevronUp className="size-4.5" />
+              ) : (
+                <ChevronDown className="size-4.5" />
+              )}
+            </Button>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onDeleteSession(unfinishedSessions[0].id)}
-              className="text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 gap-1.5 h-8.5 rounded-lg cursor-pointer"
-            >
-              <Trash2 className="size-3.5" />
-              Hủy phiên
-            </Button>
-            <Button
-              variant={
-                unfinishedSessions[0].mode === 'exam' 
-                  ? 'exam' 
-                  : unfinishedSessions[0].mode === 'flashcard' 
-                  ? 'default' 
-                  : 'study'
-              }
-              size="sm"
-              onClick={() => onResumeSession(unfinishedSessions[0])}
-              className={`text-xs gap-1.5 font-bold h-8.5 px-4 rounded-lg shadow-xs cursor-pointer ${
-                unfinishedSessions[0].mode === 'flashcard'
-                  ? 'bg-amber-600 hover:bg-amber-500 text-white border border-amber-500'
-                  : ''
-              }`}
-            >
-              <span>{unfinishedSessions[0].mode === 'flashcard' ? 'Lật thẻ tiếp' : 'Tiếp tục học ngay'}</span>
-              <ArrowRight className="size-3.5" />
-            </Button>
-          </div>
+          {/* Collapsible List of All Unfinished Sessions */}
+          {isUnfinishedExpanded && (
+            <div className="border-t border-primary/20 divide-y divide-primary/15 bg-card/40">
+              {unfinishedSessions.map((session) => {
+                const percent = Math.min(100, Math.round(((session.current_index + 1) / session.total_questions) * 100));
+                const answeredCount = Object.keys(session.user_answers || {}).length;
+
+                return (
+                  <div
+                    key={session.id}
+                    className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-primary/5 transition-colors"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className={`p-2 rounded-xl mt-0.5 shadow-2xs shrink-0 ${
+                        session.mode === 'flashcard'
+                          ? 'bg-amber-500/20 text-amber-500'
+                          : session.mode === 'exam'
+                          ? 'bg-rose-500/20 text-rose-500'
+                          : 'bg-primary/20 text-primary'
+                      }`}>
+                        {session.mode === 'flashcard' ? (
+                          <Zap className="size-4 fill-current" />
+                        ) : session.mode === 'exam' ? (
+                          <GraduationCap className="size-4" />
+                        ) : (
+                          <BookOpen className="size-4" />
+                        )}
+                      </div>
+
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold text-foreground truncate max-w-[280px] sm:max-w-md">
+                            {session.deck_title}
+                          </span>
+                          <Badge
+                            variant={
+                              session.mode === 'exam'
+                                ? 'warning'
+                                : session.mode === 'flashcard'
+                                ? 'secondary'
+                                : 'info'
+                            }
+                            className={`text-[10px] uppercase font-mono px-2 py-0.2 shrink-0 ${
+                              session.mode === 'flashcard'
+                                ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
+                                : ''
+                            }`}
+                          >
+                            {session.mode === 'exam'
+                              ? 'Thi thử'
+                              : session.mode === 'flashcard'
+                              ? 'Flashcard'
+                              : 'Học tập'}
+                          </Badge>
+                        </div>
+
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                          <span>
+                            Đang ở {session.mode === 'flashcard' ? 'thẻ' : 'câu'}{' '}
+                            <strong className="text-primary font-mono">{session.current_index + 1}</strong> / {session.total_questions}
+                          </span>
+                          <span>•</span>
+                          <span>
+                            Đã trả lời: <strong className="text-foreground font-mono">{answeredCount}</strong> câu
+                          </span>
+                          {session.mode === 'exam' && session.time_remaining_sec > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="text-amber-500 font-mono">
+                                Còn {Math.floor(session.time_remaining_sec / 60)} phút
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="w-full sm:max-w-xs h-1.5 rounded-full bg-secondary/80 overflow-hidden mt-1">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              session.mode === 'exam'
+                                ? 'bg-rose-500'
+                                : session.mode === 'flashcard'
+                                ? 'bg-amber-500'
+                                : 'bg-primary'
+                            }`}
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSessionToDelete(session)}
+                        className="text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 gap-1.5 h-8.5 rounded-lg cursor-pointer"
+                      >
+                        <Trash2 className="size-3.5" />
+                        Hủy phiên
+                      </Button>
+                      <Button
+                        variant={
+                          session.mode === 'exam'
+                            ? 'exam'
+                            : session.mode === 'flashcard'
+                            ? 'default'
+                            : 'study'
+                        }
+                        size="sm"
+                        onClick={() => onResumeSession(session)}
+                        className={`text-xs gap-1.5 font-bold h-8.5 px-4 rounded-lg shadow-xs cursor-pointer ${
+                          session.mode === 'flashcard'
+                            ? 'bg-amber-600 hover:bg-amber-500 text-white border border-amber-500'
+                            : ''
+                        }`}
+                      >
+                        <span>{session.mode === 'flashcard' ? 'Lật thẻ tiếp' : 'Tiếp tục học ngay'}</span>
+                        <ArrowRight className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -1035,6 +1143,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </Button>
                   </div>
 
+                  {selectedDeckWrongQuestions.length > 0 && (
+                    <Button
+                      variant="secondary"
+                      className="w-full justify-center h-10 gap-2 text-xs font-bold border border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 rounded-xl cursor-pointer"
+                      onClick={() => {
+                        if (onStartWrongQuestionsSession) {
+                          onStartWrongQuestionsSession(selectedDeck.id, selectedDeck.title, selectedDeckWrongQuestions);
+                        }
+                        setSelectedDeck(null);
+                      }}
+                    >
+                      <RotateCcw className="size-4 text-amber-500" />
+                      Học lại các câu sai ({selectedDeckWrongQuestions.length} câu)
+                    </Button>
+                  )}
+
                   <Button
                     variant="secondary"
                     className="w-full justify-center h-9.5 gap-2 text-xs font-bold border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 rounded-xl cursor-pointer"
@@ -1050,106 +1174,144 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               ) : (
                 /* No active session -> Choose Study, Exam, or Flashcard Mode */
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
-                  {/* Study Mode Card */}
-                  <div 
-                    onClick={() => {
-                      onStartSession(selectedDeck, 'study');
-                      setSelectedDeck(null);
-                    }}
-                    className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-card via-card to-emerald-950/15 p-4.5 hover:border-emerald-500/70 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer group flex flex-col justify-between space-y-3"
-                  >
-                    <div className="space-y-1.5">
-                      <div className="size-9 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold shadow-2xs">
-                        <BookOpen className="size-4.5" />
+                <div className="space-y-3 pt-1">
+                  {/* Wrong Questions Practice Card (if any) */}
+                  {selectedDeckWrongQuestions.length > 0 && (
+                    <div 
+                      onClick={() => {
+                        if (onStartWrongQuestionsSession) {
+                          onStartWrongQuestionsSession(selectedDeck.id, selectedDeck.title, selectedDeckWrongQuestions);
+                        } else {
+                          onStartSession(selectedDeck, 'study');
+                        }
+                        setSelectedDeck(null);
+                      }}
+                      className="rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent p-4 hover:border-amber-500 hover:bg-amber-500/20 transition-all active:scale-[0.99] cursor-pointer group flex items-center justify-between gap-3 shadow-xs"
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <div className="size-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform shrink-0">
+                          <RotateCcw className="size-5" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-extrabold text-foreground flex items-center gap-2 group-hover:text-amber-500 transition-colors">
+                            Học lại các câu sai ({selectedDeckWrongQuestions.length} câu)
+                            <Badge variant="warning" className="text-[10px] uppercase font-mono px-1.5 py-0">
+                              Cần củng cố
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Chỉ tập trung hiển thị và ôn lại {selectedDeckWrongQuestions.length} câu đã trả lời sai từ lần học trước
+                          </p>
+                        </div>
                       </div>
-                      <h4 className="text-sm font-extrabold text-foreground group-hover:text-emerald-400 transition-colors">
-                        Chế độ Học tập
-                      </h4>
-                      <div className="space-y-1 text-[11px] text-muted-foreground leading-relaxed pt-1">
-                        <div className="flex items-center gap-1.5 text-emerald-500/90 font-medium">
-                          <Check className="size-3" /> Chấm điểm tức thì 1-click
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Check className="size-3" /> Giải thích song ngữ chi tiết
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Check className="size-3" /> Thuật toán Leitner Hộp 1–5
-                        </div>
-                      </div>
+                      <Button variant="default" size="sm" className="pointer-events-none text-xs font-bold rounded-xl h-8.5 px-3.5 bg-amber-500 hover:bg-amber-600 text-white shadow-xs shrink-0">
+                        Học câu sai ngay
+                        <ArrowRight className="size-3.5 ml-1" />
+                      </Button>
                     </div>
-                    <Button variant="study" size="sm" className="w-full pointer-events-none text-xs font-bold rounded-xl h-8.5">
-                      Bắt đầu Học tập
-                    </Button>
-                  </div>
+                  )}
 
-                  {/* Exam Mode Card */}
-                  <div 
-                    onClick={() => {
-                      onStartSession(selectedDeck, 'exam');
-                      setSelectedDeck(null);
-                    }}
-                    className="rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-card via-card to-indigo-950/15 p-4.5 hover:border-indigo-500/70 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer group flex flex-col justify-between space-y-3"
-                  >
-                    <div className="space-y-1.5">
-                      <div className="size-9 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center font-bold shadow-2xs">
-                        <GraduationCap className="size-4.5" />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    {/* Study Mode Card */}
+                    <div 
+                      onClick={() => {
+                        onStartSession(selectedDeck, 'study');
+                        setSelectedDeck(null);
+                      }}
+                      className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-card via-card to-emerald-950/15 p-4.5 hover:border-emerald-500/70 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer group flex flex-col justify-between space-y-3"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="size-9 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold shadow-2xs">
+                          <BookOpen className="size-4.5" />
+                        </div>
+                        <h4 className="text-sm font-extrabold text-foreground group-hover:text-emerald-400 transition-colors">
+                          Chế độ Học tập
+                        </h4>
+                        <div className="space-y-1 text-[11px] text-muted-foreground leading-relaxed pt-1">
+                          <div className="flex items-center gap-1.5 text-emerald-500/90 font-medium">
+                            <Check className="size-3" /> Chấm điểm tức thì 1-click
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Check className="size-3" /> Giải thích song ngữ chi tiết
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Check className="size-3" /> Thuật toán Leitner Hộp 1–5
+                          </div>
+                        </div>
                       </div>
-                      <h4 className="text-sm font-extrabold text-foreground group-hover:text-indigo-400 transition-colors">
-                        Chế độ Thi thử
-                      </h4>
-                      <div className="space-y-1 text-[11px] text-muted-foreground leading-relaxed pt-1">
-                        <div className="flex items-center gap-1.5 text-indigo-400 font-medium">
-                          <Check className="size-3" /> Đồng hồ bấm giờ 60 phút
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Check className="size-3" /> Đánh dấu cờ (Flag) câu phân vân
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Check className="size-3" /> Tổng kết Đạt/Trượt & xếp loại
-                        </div>
-                      </div>
+                      <Button variant="study" size="sm" className="w-full pointer-events-none text-xs font-bold rounded-xl h-8.5">
+                        Bắt đầu Học tập
+                      </Button>
                     </div>
-                    <Button variant="exam" size="sm" className="w-full pointer-events-none text-xs font-bold rounded-xl h-8.5">
-                      Bắt đầu Thi thử
-                    </Button>
-                  </div>
 
-                  {/* Flashcard Mode Card */}
-                  <div 
-                    onClick={async () => {
-                      const qs = await dbService.getDeckQuestions(selectedDeck.id);
-                      if (qs.length === 0) {
-                        toast.warning(`Bộ đề "${selectedDeck.title}" hiện chưa có câu hỏi nào để ôn tập flashcard.`);
-                        return;
-                      }
-                      onStartFlashcard(qs, `${selectedDeck.title} (Flashcard)`);
-                      setSelectedDeck(null);
-                    }}
-                    className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-card via-card to-amber-950/15 p-4.5 hover:border-amber-500/70 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer group flex flex-col justify-between space-y-3"
-                  >
-                    <div className="space-y-1.5">
-                      <div className="size-9 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold shadow-2xs">
-                        <Zap className="size-4.5 fill-current" />
-                      </div>
-                      <h4 className="text-sm font-extrabold text-foreground group-hover:text-amber-400 transition-colors">
-                        Lật thẻ Flashcard
-                      </h4>
-                      <div className="space-y-1 text-[11px] text-muted-foreground leading-relaxed pt-1">
-                        <div className="flex items-center gap-1.5 text-amber-400 font-medium">
-                          <Check className="size-3" /> Lướt thẻ 3D siêu tốc
+                    {/* Exam Mode Card */}
+                    <div 
+                      onClick={() => {
+                        onStartSession(selectedDeck, 'exam');
+                        setSelectedDeck(null);
+                      }}
+                      className="rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-card via-card to-indigo-950/15 p-4.5 hover:border-indigo-500/70 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer group flex flex-col justify-between space-y-3"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="size-9 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center font-bold shadow-2xs">
+                          <GraduationCap className="size-4.5" />
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <Check className="size-3" /> Phím Space xem đáp án chuẩn
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Check className="size-3" /> Phím 1 (Chưa nhớ) / 2 (Đã thuộc)
+                        <h4 className="text-sm font-extrabold text-foreground group-hover:text-indigo-400 transition-colors">
+                          Chế độ Thi thử
+                        </h4>
+                        <div className="space-y-1 text-[11px] text-muted-foreground leading-relaxed pt-1">
+                          <div className="flex items-center gap-1.5 text-indigo-400 font-medium">
+                            <Check className="size-3" /> Đồng hồ bấm giờ 60 phút
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Check className="size-3" /> Đánh dấu cờ (Flag) câu phân vân
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Check className="size-3" /> Tổng kết Đạt/Trượt & xếp loại
+                          </div>
                         </div>
                       </div>
+                      <Button variant="exam" size="sm" className="w-full pointer-events-none text-xs font-bold rounded-xl h-8.5">
+                        Bắt đầu Thi thử
+                      </Button>
                     </div>
-                    <Button variant="outline" size="sm" className="w-full pointer-events-none text-xs font-bold rounded-xl h-8.5 border-amber-500/40 text-amber-400 group-hover:bg-amber-500 group-hover:text-white transition-colors">
-                      Ôn tập Flashcard
-                    </Button>
+
+                    {/* Flashcard Mode Card */}
+                    <div 
+                      onClick={async () => {
+                        const qs = await dbService.getDeckQuestions(selectedDeck.id);
+                        if (qs.length === 0) {
+                          toast.warning(`Bộ đề "${selectedDeck.title}" hiện chưa có câu hỏi nào để ôn tập flashcard.`);
+                          return;
+                        }
+                        onStartFlashcard(qs, `${selectedDeck.title} (Flashcard)`);
+                        setSelectedDeck(null);
+                      }}
+                      className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-card via-card to-amber-950/15 p-4.5 hover:border-amber-500/70 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer group flex flex-col justify-between space-y-3"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="size-9 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold shadow-2xs">
+                          <Zap className="size-4.5 fill-current" />
+                        </div>
+                        <h4 className="text-sm font-extrabold text-foreground group-hover:text-amber-400 transition-colors">
+                          Lật thẻ Flashcard
+                        </h4>
+                        <div className="space-y-1 text-[11px] text-muted-foreground leading-relaxed pt-1">
+                          <div className="flex items-center gap-1.5 text-amber-400 font-medium">
+                            <Check className="size-3" /> Lướt thẻ 3D siêu tốc
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Check className="size-3" /> Phím Space xem đáp án chuẩn
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Check className="size-3" /> Phím 1 (Chưa nhớ) / 2 (Đã thuộc)
+                          </div>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="w-full pointer-events-none text-xs font-bold rounded-xl h-8.5 border-amber-500/40 text-amber-400 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                        Ôn tập Flashcard
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1188,6 +1350,57 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Unfinished Session Confirmation Dialog */}
+      <Dialog open={Boolean(sessionToDelete)} onOpenChange={(open) => !open && setSessionToDelete(null)}>
+        <DialogContent className="sm:max-w-md p-6 rounded-3xl bg-card border-border/80 shadow-2xl">
+          <DialogHeader>
+            <div className="size-11 rounded-2xl bg-destructive/15 text-destructive flex items-center justify-center font-bold mb-2">
+              <Trash2 className="size-5" />
+            </div>
+            <DialogTitle className="text-lg font-extrabold text-foreground">
+              Xác nhận hủy phiên học
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed pt-1">
+              Bạn có chắc chắn muốn hủy phiên {sessionToDelete?.mode === 'exam' ? 'thi thử' : sessionToDelete?.mode === 'flashcard' ? 'lật thẻ' : 'học tập'} dở dang của bộ đề <strong className="text-foreground">"{sessionToDelete?.deck_title}"</strong> không?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-3.5 rounded-xl bg-muted/40 border border-border/60 text-xs text-muted-foreground space-y-1">
+            <div className="flex items-center gap-1.5 font-semibold text-foreground">
+              <CheckCircle2 className="size-4 text-emerald-500" />
+              Bảo lưu tiến trình học trước đó
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Lịch sử đã hoàn thành và cấp độ các thẻ ghi nhớ (hộp Leitner) từ các lần học trước vẫn được lưu giữ an toàn, không bị mất.
+            </p>
+          </div>
+
+          <DialogFooter className="sm:justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSessionToDelete(null)}
+              className="text-xs rounded-xl h-9 font-semibold cursor-pointer"
+            >
+              Giữ lại phiên
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={async () => {
+                if (sessionToDelete) {
+                  await onDeleteSession(sessionToDelete.id);
+                  setSessionToDelete(null);
+                }
+              }}
+              className="text-xs rounded-xl h-9 font-bold cursor-pointer"
+            >
+              Xác nhận hủy phiên
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

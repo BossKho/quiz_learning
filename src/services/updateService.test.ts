@@ -42,10 +42,10 @@ describe('updateService', () => {
   describe('checkForAppUpdates with mocked fetch', () => {
     it('detects available update correctly', async () => {
       const mockRelease = {
-        tag_name: 'v2.2.0',
-        name: 'Ver 2.2',
+        tag_name: 'v2.3.0',
+        name: 'Ver 2.3',
         published_at: '2026-10-07T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v2.2.0',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v2.3.0',
         body: 'Bug fixes and performance improvements',
         assets: [
           {
@@ -63,17 +63,17 @@ describe('updateService', () => {
 
       const update = await checkForAppUpdates();
       expect(update.hasUpdate).toBe(true);
-      expect(update.latestVersion).toBe('2.2.0');
+      expect(update.latestVersion).toBe('2.3.0');
       expect(update.setupAsset?.name).toBe('QuizLearningPro_Setup.exe');
       expect(update.setupAsset?.sizeFormatted).toBe('5.2 MB');
     });
 
     it('returns hasUpdate false when on latest version', async () => {
       const mockRelease = {
-        tag_name: 'v2.1.0',
-        name: 'Ver 2.1',
+        tag_name: 'v2.2.0',
+        name: 'Ver 2.2',
         published_at: '2026-10-07T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v2.1.0',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v2.2.0',
         body: 'Latest release',
         assets: [],
       };

@@ -120,6 +120,35 @@ describe('session-engine', () => {
       expect(result.score_percent).toBe(50);
       expect(result.passed).toBe(false); // < 70%
       expect(result.time_spent_sec).toBe(600); // 3600 - 3000
+
+      // Only incorrect questions are extracted
+      const wrongQuestions = result.details.filter((d) => !d.isCorrect).map((d) => d.question);
+      expect(wrongQuestions.length).toBe(1);
+      expect(wrongQuestions[0].id).toBe('q002');
+    });
+
+    it('returns empty wrong questions array when all answers are correct', () => {
+      const session: ActiveSession = {
+        id: 'sess_2',
+        deck_id: 'mock_01',
+        deck_title: 'Mock Test 01',
+        mode: 'study',
+        current_index: 0,
+        total_questions: 1,
+        time_limit_sec: 0,
+        time_remaining_sec: 0,
+        question_ids: ['q001'],
+        user_answers: { q001: [1] },
+        flagged_ids: [],
+        is_completed: true,
+        created_at: Date.now(),
+        updated_at: Date.now(),
+      };
+
+      const result = calculateExamResult(session, [sampleQuestion]);
+      const wrongQuestions = result.details.filter((d) => !d.isCorrect).map((d) => d.question);
+      expect(wrongQuestions.length).toBe(0);
+      expect(result.score_percent).toBe(100);
     });
   });
 });

@@ -12,18 +12,20 @@ import {
   Languages, 
   Info
 } from 'lucide-react';
-import type { ExamResultSummary } from '@/types/quiz';
+import type { ExamResultSummary, Question } from '@/types/quiz';
 
 interface ExamReviewProps {
   result: ExamResultSummary;
   onRetakeExam: () => void;
   onReturnDashboard: () => void;
+  onPracticeWrongQuestions?: (wrongQuestions: Question[]) => void;
 }
 
 export const ExamReview: React.FC<ExamReviewProps> = ({
   result,
   onRetakeExam,
   onReturnDashboard,
+  onPracticeWrongQuestions,
 }) => {
   const [filter, setFilter] = useState<'all' | 'incorrect' | 'correct'>('all');
   const [showViMap, setShowViMap] = useState<Record<string, boolean>>({});
@@ -103,7 +105,23 @@ export const ExamReview: React.FC<ExamReviewProps> = ({
             <Home className="size-3.5" />
             Dashboard
           </Button>
-          <Button variant="default" size="sm" onClick={onRetakeExam} className="gap-1.5 text-xs">
+          {result.incorrect_count > 0 && onPracticeWrongQuestions && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => {
+                const wrongQuestions = result.details
+                  .filter((item) => !item.isCorrect)
+                  .map((item) => item.question);
+                onPracticeWrongQuestions(wrongQuestions);
+              }}
+              className="gap-1.5 text-xs bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer"
+            >
+              <RotateCcw className="size-3.5" />
+              Ôn ngay {result.incorrect_count} câu sai
+            </Button>
+          )}
+          <Button variant="default" size="sm" onClick={onRetakeExam} className="gap-1.5 text-xs cursor-pointer">
             <RotateCcw className="size-3.5" />
             Retake Exam
           </Button>

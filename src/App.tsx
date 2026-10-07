@@ -330,10 +330,34 @@ export function App() {
     setCurrentView('explorer');
   };
 
+  const handleStartWrongQuestionsSession = async (
+    deckId: string,
+    deckTitle: string,
+    wrongQuestions: Question[]
+  ) => {
+    if (!wrongQuestions || wrongQuestions.length === 0) {
+      toast.info('Không có câu hỏi sai nào để ôn tập.');
+      return;
+    }
+
+    const session = await createNewSession(
+      deckId,
+      `${deckTitle} (Ôn ${wrongQuestions.length} câu sai)`,
+      'study',
+      wrongQuestions,
+      false,
+      0
+    );
+
+    setSessionQuestions(wrongQuestions);
+    setActiveSession(session);
+    setCurrentView('study');
+  };
+
   const handleDeleteSession = async (sessionId: string) => {
     await dbService.deleteSession(sessionId, true);
     await reloadData();
-    toast.info('Đã hủy phiên và đặt lại tiến trình.');
+    toast.info('Đã hủy phiên học dở dang.');
   };
 
   const handleResetDeckProgress = async (deckId: string) => {
@@ -516,6 +540,7 @@ export function App() {
             onResumeSession={handleResumeSession}
             onRestartSession={handleRestartSession}
             onDeleteSession={handleDeleteSession}
+            onStartWrongQuestionsSession={handleStartWrongQuestionsSession}
             onResetDeckProgress={handleResetDeckProgress}
             onResetAllProgress={handleResetAllProgress}
             onOpenExplorer={handleOpenExplorer}
@@ -529,15 +554,20 @@ export function App() {
 
         {currentView === 'study' && activeSession && (
           <StudyArena
+            key={activeSession.id}
             session={activeSession}
             questions={sessionQuestions}
             onExit={handleExitToDashboard}
             onUpdateSession={(updated) => setActiveSession(updated)}
+            onPracticeWrongQuestions={(wrongQs, deckId, deckTitle) =>
+              handleStartWrongQuestionsSession(deckId, deckTitle, wrongQs)
+            }
           />
         )}
 
         {currentView === 'exam' && activeSession && (
           <ExamArena
+            key={activeSession.id}
             session={activeSession}
             questions={sessionQuestions}
             onFinishExam={handleFinishExam}
@@ -548,6 +578,7 @@ export function App() {
 
         {currentView === 'flashcard' && flashcardQuestions.length > 0 && (
           <FlashcardArena
+            key={activeSession?.id || 'flashcard'}
             deckTitle={flashcardDeckTitle}
             questions={flashcardQuestions}
             initialSession={activeSession?.mode === 'flashcard' ? activeSession : undefined}
@@ -562,6 +593,14 @@ export function App() {
               const deck = decks.find((d) => d.title === examResult.deck_title);
               if (deck) handleStartSession(deck, 'exam');
               else handleExitToDashboard();
+            }}
+            onPracticeWrongQuestions={(wrongQuestions) => {
+              const deck = decks.find((d) => d.title === examResult.deck_title);
+              handleStartWrongQuestionsSession(
+                deck?.id || 'exam_' + Date.now(),
+                examResult.deck_title,
+                wrongQuestions
+              );
             }}
             onReturnDashboard={handleExitToDashboard}
           />

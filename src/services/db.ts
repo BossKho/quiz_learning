@@ -826,9 +826,9 @@ class DatabaseManager {
     await this.init();
     if (!this.db) return;
 
-    // Clean up any other unfinished session for the same deck to prevent duplicates
+    // Clean up any other unfinished session for the same deck to prevent duplicates, but keep completed sessions intact
     if (session.deck_id && session.deck_id !== 'custom_exam' && session.deck_id !== 'flashcard_deck') {
-      this.db.run('DELETE FROM active_sessions WHERE deck_id = ? AND id != ?;', [session.deck_id, session.id]);
+      this.db.run('DELETE FROM active_sessions WHERE deck_id = ? AND id != ? AND is_completed = 0;', [session.deck_id, session.id]);
     }
 
     const now = Date.now();
@@ -900,17 +900,99 @@ class DatabaseManager {
 
     if (resetStats) {
       const session = await this.getActiveSession(sessionId);
-      if (session) {
-        // Reset Leitner stats for all questions answered in this cancelled session
-        const answeredQIds = Object.keys(session.user_answers || {});
-        for (const qId of answeredQIds) {
-          this.db.run('DELETE FROM question_stats WHERE question_id = ?;', [qId]);
+      if (session && session.deck_id) {
+        let isFirstTimeStudy = true;
+
+        // Check if there are any completed sessions for this deck
+        const stmtCompleted = this.db.prepare(`
+          SELECT COUNT(*) as count FROM active_sessions 
+          WHERE deck_id = ? AND is_completed = 1 AND id != ?;
+        `);
+        stmtCompleted.bind([session.deck_id, sessionId]);
+        if (stmtCompleted.step() && (stmtCompleted.getAsObject().count as number) > 0) {
+          isFirstTimeStudy = false;
+        }
+        stmtCompleted.free();
+
+        // Also check if questions in this deck already have prior history from earlier completions
+        if (isFirstTimeStudy) {
+          const stmtHist = this.db.prepare(`
+            SELECT COUNT(*) as count FROM question_stats qs
+            JOIN deck_questions dq ON qs.question_id = dq.question_id
+            WHERE dq.deck_id = ? AND (qs.correct_count > 1 OR qs.leitner_box > 2 OR (qs.correct_count + qs.incorrect_count > 1));
+          `);
+          stmtHist.bind([session.deck_id]);
+          if (stmtHist.step() && (stmtHist.getAsObject().count as number) > 0) {
+            isFirstTimeStudy = false;
+          }
+          stmtHist.free();
+        }
+
+        // Only reset question stats if this was a first-time study run
+        if (isFirstTimeStudy) {
+          const answeredQIds = Object.keys(session.user_answers || {});
+          for (const qId of answeredQIds) {
+            this.db.run('DELETE FROM question_stats WHERE question_id = ?;', [qId]);
+          }
         }
       }
     }
 
     this.db.run('DELETE FROM active_sessions WHERE id = ?;', [sessionId]);
     this.persistImmediate();
+  }
+
+  /**
+   * Lấy danh sách các câu hỏi bị làm sai của bộ đề
+   * Ưu tiên các câu sai trong phiên gần nhất; nếu không có thì lấy các câu có incorrect_count > 0
+   */
+  async getDeckWrongQuestions(deckId: string): Promise<Question[]> {
+    await this.init();
+    if (!this.db) return [];
+
+    const allQuestions = await this.getDeckQuestions(deckId);
+    if (allQuestions.length === 0) return [];
+
+    // Lấy phiên gần nhất (hoàn thành hoặc dở dang) của bộ đề này
+    const stmt = this.db.prepare(`
+      SELECT user_answers_json, is_completed FROM active_sessions 
+      WHERE deck_id = ? 
+      ORDER BY updated_at DESC LIMIT 1;
+    `);
+    stmt.bind([deckId]);
+    let latestAnswers: Record<string, number[]> | null = null;
+    if (stmt.step()) {
+      try {
+        const row = stmt.getAsObject();
+        latestAnswers = JSON.parse(row.user_answers_json as string);
+      } catch (e) {
+        latestAnswers = null;
+      }
+    }
+    stmt.free();
+
+    // 1. Kiểm tra các câu bị trả lời sai trong phiên gần nhất
+    if (latestAnswers && Object.keys(latestAnswers).length > 0) {
+      const wrongList = allQuestions.filter((q) => {
+        const ans = latestAnswers![q.id];
+        if (!ans || ans.length === 0) return false;
+        const sortedAns = [...ans].sort();
+        const sortedCorrect = [...q.answer].sort();
+        const isCorrect =
+          sortedAns.length === sortedCorrect.length &&
+          sortedAns.every((val, idx) => val === sortedCorrect[idx]);
+        return !isCorrect;
+      });
+
+      if (wrongList.length > 0) {
+        return wrongList;
+      }
+    }
+
+    // 2. Dự phòng: Các câu có lịch sử trả lời sai và chưa thuộc hẳn (Leitner box < 5)
+    return allQuestions.filter(
+      (q) => (q.stats?.incorrect_count || 0) > 0 && (q.stats?.leitner_box || 1) < 5
+    );
   }
 
   async resetDeckProgress(deckId: string): Promise<void> {

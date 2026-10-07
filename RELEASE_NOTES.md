@@ -1,21 +1,22 @@
-## Quiz Learning Pro v2.1.0
+## Quiz Learning Pro v2.2.0
 
 ### What's Changed
 
-#### Flashcard Review Improvements
-* Redesigned flashcard back face to display only the correct answer instead of all choices.
-* Cleaned up review interface to eliminate visual clutter from incorrect distractors during flip.
-* Retained full detailed explanation and notes on the back face for targeted reinforcement.
+#### Study Session Management & Progress Safeguards
+* **Collapsible Unfinished Sessions Dropdown**: Redesigned the in-progress session section on the Dashboard into an intuitive collapsible dropdown list, cleanly displaying all active study sessions, mock exams, and flashcard reviews alongside real-time progress indicators.
+* **Session Deletion Confirmation Dialog**: Added a confirmation modal prior to discarding any active session to prevent accidental progress removal.
+* **Historical Progress & Leitner Level Safeguards**: Discarding an in-progress session no longer resets previously completed runs. Historical completion records and Leitner spaced-repetition levels (Boxes 1–5) from prior sessions remain fully preserved.
 
-#### General Enhancements
-* Refined session navigation and flip animations.
-* Maintained database stability and offline synchronization performance.
+#### Targeted Mistake Practice (Review Wrong Questions)
+* **Flexible Mistake Review**: Upon completing a deck or exam, learners can review mistakes right away or return to the Dashboard. Decks with previous errors retain a dedicated "Practice Wrong Questions" action whenever reopened.
+* **Strict Mistake Filtering**: Launching wrong question review strictly filters and loads only the questions answered incorrectly in the previous run, completely excluding correct questions.
 
 ### Installation & Updates
-* **Existing installations**: Click **Update Now** in the in-app notification to upgrade automatically.
-* **New installations**: Download and run `QuizLearningPro_Setup.exe` from the assets below.
+* **Existing Installations**: Click **Update Now** inside the in-app notification to upgrade automatically.
+* **New Installations**: Download and run `QuizLearningPro_Setup.exe` from the release assets below.
 
 ### Integrity Check
 ```
-SHA-256: 733052924E369BBD7B5FC512BD5E817DF3E37AB35FCBF386C5FCE96A63CA11D1
+SHA-256 (Setup): 0133CC9608A39CF8C68B7017A404774EAB4B855876DACB63216192FAFE21718C
+SHA-256 (Portable): 79608C5B74D4815B29EE3C414E112288803263B958B71D7AFFF408D0A65F6E95
 ```

@@ -38,6 +38,7 @@ interface StudyArenaProps {
   questions: Question[];
   onExit: () => void;
   onUpdateSession: (session: ActiveSession) => void;
+  onPracticeWrongQuestions?: (wrongQuestions: Question[], deckId: string, deckTitle: string) => void;
 }
 
 export const StudyArena: React.FC<StudyArenaProps> = ({
@@ -45,6 +46,7 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
   questions,
   onExit,
   onUpdateSession,
+  onPracticeWrongQuestions,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(session.current_index || 0);
   const [showVi, setShowVi] = useState(false);
@@ -61,6 +63,19 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
   const [isCompleted, setIsCompleted] = useState(session.is_completed || false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
+
+  // Reset state whenever active session ID changes
+  useEffect(() => {
+    setCurrentIndex(session.current_index || 0);
+    setUserAnswers(session.user_answers || {});
+    const initial: Record<string, boolean> = {};
+    for (const [id, answers] of Object.entries(session.user_answers || {})) {
+      if (answers.length > 0) initial[id] = true;
+    }
+    setSubmittedQuestions(initial);
+    setIsCompleted(session.is_completed || false);
+    setShowExplanationOverride(false);
+  }, [session.id]);
 
   // Memoize questions for the session with stable option positions across reloads
   const preparedQuestions = useMemo<ShuffledQuestion[]>(() => {
@@ -431,7 +446,13 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
             {hasMistakes && (
               <Button
                 variant="default"
-                onClick={handleReviewMistakesOnly}
+                onClick={() => {
+                  if (onPracticeWrongQuestions) {
+                    onPracticeWrongQuestions(studyStats.incorrectQuestions, session.deck_id, session.deck_title);
+                  } else {
+                    handleReviewMistakesOnly();
+                  }
+                }}
                 className="flex-1 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer active:scale-95 shadow-md flex items-center justify-center gap-2"
               >
                 <RotateCcw className="size-4" />
