@@ -28,6 +28,9 @@ import { checkForAppUpdates, type UpdateInfo } from '@/services/updateService';
 import { UpdateModal } from '@/components/UpdateModal';
 import { NotificationBar } from '@/components/NotificationBar';
 import { subscribeToLiveAnnouncements, type SystemAnnouncement } from '@/services/announcementService';
+import { StudyPet } from '@/components/StudyPet/StudyPet';
+import { WallpaperModal } from '@/components/WallpaperModal';
+import { wallpaperService, type WallpaperSettings } from '@/services/wallpaperService';
 
 export function App() {
   const [isDbReady, setIsDbReady] = useState(false);
@@ -70,6 +73,17 @@ export function App() {
 
   // Live Server Announcements Bar
   const [liveAnnouncement, setLiveAnnouncement] = useState<SystemAnnouncement | null>(null);
+
+  // Submerged Wallpaper States
+  const [wallpaperSettings, setWallpaperSettings] = useState<WallpaperSettings>(wallpaperService.getSettings());
+  const [wallpaperModalOpen, setWallpaperModalOpen] = useState(false);
+
+  // Subscribe to Wallpaper changes
+  useEffect(() => {
+    return wallpaperService.subscribe((s) => {
+      setWallpaperSettings(s);
+    });
+  }, []);
 
   // Load data from SQLite
   const reloadData = useCallback(async () => {
@@ -458,26 +472,41 @@ export function App() {
   // If user is not logged in, render the clean, secure Landing Page
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20">
-        <NotificationBar announcement={liveAnnouncement} currentUserEmail={null} />
+      <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20 relative">
+        {/* Submerged Application Wallpaper Layer */}
+        {wallpaperSettings.enabled && wallpaperSettings.imageUrl && (
+          <div
+            aria-hidden="true"
+            className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-all duration-500"
+            style={{
+              backgroundImage: `url(${wallpaperSettings.imageUrl})`,
+              opacity: wallpaperSettings.opacity,
+              filter: wallpaperSettings.blur > 0 ? `blur(${wallpaperSettings.blur}px)` : 'none',
+            }}
+          />
+        )}
 
-        <LandingPage
-          onOpenAuthModal={(mode) => {
-            setAuthMode(mode);
-            setAuthModalOpen(true);
-          }}
-        />
+        <div className="relative z-10 min-h-screen flex flex-col">
+          <NotificationBar announcement={liveAnnouncement} currentUserEmail={null} />
 
-        <AuthModal
-          open={authModalOpen}
-          onOpenChange={setAuthModalOpen}
-          initialMode={authMode}
-          onSuccess={async () => {
-            await reloadData();
-          }}
-        />
+          <LandingPage
+            onOpenAuthModal={(mode) => {
+              setAuthMode(mode);
+              setAuthModalOpen(true);
+            }}
+          />
 
-        <ToastContainer />
+          <AuthModal
+            open={authModalOpen}
+            onOpenChange={setAuthModalOpen}
+            initialMode={authMode}
+            onSuccess={async () => {
+              await reloadData();
+            }}
+          />
+
+          <ToastContainer />
+        </div>
       </div>
     );
   }
@@ -486,32 +515,48 @@ export function App() {
   const isFocusArena = currentView === 'study' || currentView === 'exam' || currentView === 'flashcard';
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20">
-      {/* Live Server Announcement Bar */}
-      <NotificationBar announcement={liveAnnouncement} currentUserEmail={currentUser?.email} />
-
-      {/* Top Header - automatically visible on Dashboard, Explorer, Review; auto-hidden in Study/Exam/Flashcard */}
-      {!isFocusArena && (
-        <Header
-          currentView={currentView}
-          onNavigate={(view) => {
-            if (view === 'dashboard') handleExitToDashboard();
-            else if (view === 'explorer') handleOpenExplorer();
-            else setCurrentView(view as any);
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20 relative">
+      {/* Submerged Application Wallpaper Layer */}
+      {wallpaperSettings.enabled && wallpaperSettings.imageUrl && (
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-all duration-500"
+          style={{
+            backgroundImage: `url(${wallpaperSettings.imageUrl})`,
+            opacity: wallpaperSettings.opacity,
+            filter: wallpaperSettings.blur > 0 ? `blur(${wallpaperSettings.blur}px)` : 'none',
           }}
-          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-          onOpenSyncModal={() => setSyncModalOpen(true)}
-          onOpenBusyModal={() => setBusyModalOpen(true)}
-          busyEnabled={busyState.settings.enabled}
-          busyInterval={busyState.settings.intervalMinutes}
-          currentUser={currentUser}
-          onOpenAuthModal={() => setAuthModalOpen(true)}
-          onQuickSync={handleQuickSync}
-          isSyncingCloud={isSyncingCloud}
-          onCheckUpdates={() => handleCheckForUpdates(true)}
-          hasPendingUpdate={Boolean(updateInfo?.hasUpdate)}
         />
       )}
+
+      {/* Main Content Wrapper */}
+      <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Live Server Announcement Bar */}
+        <NotificationBar announcement={liveAnnouncement} currentUserEmail={currentUser?.email} />
+
+        {/* Top Header - automatically visible on Dashboard, Explorer, Review; auto-hidden in Study/Exam/Flashcard */}
+        {!isFocusArena && (
+          <Header
+            currentView={currentView}
+            onNavigate={(view) => {
+              if (view === 'dashboard') handleExitToDashboard();
+              else if (view === 'explorer') handleOpenExplorer();
+              else setCurrentView(view as any);
+            }}
+            onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+            onOpenSyncModal={() => setSyncModalOpen(true)}
+            onOpenBusyModal={() => setBusyModalOpen(true)}
+            onOpenWallpaperModal={() => setWallpaperModalOpen(true)}
+            busyEnabled={busyState.settings.enabled}
+            busyInterval={busyState.settings.intervalMinutes}
+            currentUser={currentUser}
+            onOpenAuthModal={() => setAuthModalOpen(true)}
+            onQuickSync={handleQuickSync}
+            isSyncingCloud={isSyncingCloud}
+            onCheckUpdates={() => handleCheckForUpdates(true)}
+            hasPendingUpdate={Boolean(updateInfo?.hasUpdate)}
+          />
+        )}
 
       {/* Main Content Area */}
       <main className="w-full">
@@ -668,8 +713,18 @@ export function App() {
         currentUserId={currentUser?.uid}
       />
 
+      {/* Submerged Wallpaper Settings Modal */}
+      <WallpaperModal
+        open={wallpaperModalOpen}
+        onOpenChange={setWallpaperModalOpen}
+      />
+
+      {/* Embedded Background Corner Study Pet */}
+      <StudyPet />
+
       {/* Global In-App Toast Container */}
       <ToastContainer />
+      </div>
     </div>
   );
 }

@@ -277,6 +277,32 @@ Remove-Item -Path $InstallerPath -Force -ErrorAction SilentlyContinue
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+  // Prevent third-party overlay DLL injection crashes (MSI Afterburner/RTSS RTSSHooks64.dll, NVIDIA NvMemMapStoragex.dll)
+  #[cfg(target_os = "windows")]
+  {
+    // Block legacy third-party extension hook DLLs from injecting into our process
+    unsafe extern "system" {
+      fn SetProcessMitigationPolicy(
+        policy: i32,
+        lp_buffer: *const std::ffi::c_void,
+        dw_length: usize,
+      ) -> i32;
+    }
+    unsafe {
+      let policy: u32 = 1; // ProcessExtensionPointDisablePolicy: DisableExtensionPoints = 1
+      SetProcessMitigationPolicy(2, &policy as *const u32 as *const std::ffi::c_void, 4);
+    }
+
+    if std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").is_err() {
+      unsafe {
+        std::env::set_var(
+          "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+          "--disable-gpu --disable-features=RendererCodeIntegrity --disable-gpu-watchdog",
+        );
+      }
+    }
+  }
+
   let app = tauri::Builder::default()
     .runtime(tauri_runtime_wry::Wry::default())
     .invoke_handler(tauri::generate_handler![

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Playground</title>
+    <link rel="stylesheet" href="./pets.css">
+    <style>
+        @font-face {
+            font-family: 'silkscreen';
+            src: url('./Silkscreen-Regular.ttf') format('truetype');
+        }
+        :root {
+            --vscode-foreground: #ffffff;
+            --vscode-editor-background: transparent;
+            --container-paddding: 0px;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #background {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1 !important;
+            background-repeat: repeat-x;
+            background-position: bottom left;
+        }
+        #petCanvasContainer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2 !important;
+        }
+        #foreground {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5 !important;
+            background-repeat: repeat-x;
+            background-position: bottom left;
+            pointer-events: none !important;
+        }
+        #petsContainer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20 !important;
+            pointer-events: none;
+        }
+        img.pet {
+            z-index: 20 !important;
+            pointer-events: auto !important;
+            cursor: pointer;
+        }
+        .collision {
+            z-index: 25 !important;
+            pointer-events: auto !important;
+            cursor: pointer;
+        }
+        .bubble {
+            font-family: 'silkscreen', monospace, sans-serif !important;
+            font-weight: normal;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            max-width: 200px;
+            z-index: 30 !important;
+            pointer-events: auto !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="petCanvasContainer">
+        <canvas id="ballCanvas"></canvas>
+        <canvas id="foregroundEffectCanvas"></canvas>
+        <canvas id="backgroundEffectCanvas"></canvas>
+    </div>
+    <div id="petsContainer"></div>
+    <div id="foreground"></div>
+    <div id="background"></div>
+
+    <script src="./main-bundle.js"></script>
+    <script>
+        (function() {
+            // Mock VscodeStateApi - fresh state per iframe load to avoid corrupted/stale pet state
+            window.acquireVsCodeApi = function() {
+                let sessionState = undefined;
+                return {
+                    getState: function() { return undefined; }, // Always spawn requested pet freshly
+                    setState: function(state) {
+                        sessionState = state;
+                    },
+                    postMessage: function(msg) {
+                        if (window.parent && window.parent !== window) {
+                            window.parent.postMessage({ type: 'vscode_pets_event', payload: msg }, '*');
+                        }
+                    }
+                };
+            };
+
+            // Parse URL parameters or use sensible defaults
+            const urlParams = new URLSearchParams(window.location.search);
+            const theme = urlParams.get('theme') || 'forest';
+            const themeKind = parseInt(urlParams.get('themeKind') || '2', 10); // 1 = light, 2 = dark
+            const petType = urlParams.get('petType') || 'dog';
+            const petColor = urlParams.get('petColor') || (petType === 'dog' ? 'akita' : petType === 'rubber-duck' ? 'yellow' : 'brown');
+            const petSize = urlParams.get('petSize') || 'medium';
+            const throwBallWithMouse = urlParams.get('throwBallWithMouse') !== 'false';
+            const disableEffects = urlParams.get('disableEffects') === 'true';
+
+            const basePetUri = '.';
+
+            // Initialize vscode-pets app
+            if (window.petApp && typeof window.petApp.petPanelApp === 'function') {
+                try {
+                    window.petApp.petPanelApp(
+                        basePetUri,
+                        theme,
+                        themeKind,
+                        petColor,
+                        petSize,
+                        petType,
+                        throwBallWithMouse,
+                        disableEffects,
+                        window.acquireVsCodeApi()
+                    );
+                } catch (e) {
+                    console.error('Error starting pet session:', e);
+                }
+
+                // Safety fallback: if no pet spawned, force spawn pet
+                setTimeout(function() {
+                    if (window.petApp.allPets && window.petApp.allPets.pets && window.petApp.allPets.pets.length === 0) {
+                        window.postMessage({
+                            command: 'spawn-pet',
+                            type: petType,
+                            color: petColor,
+                            name: petType
+                        }, '*');
+                    }
+                }, 150);
+            }
+
+            // Auto-clamp speech bubbles so text is never cut off at the top
+            const bubbleObserver = new MutationObserver(function() {
+                const bubbles = document.querySelectorAll('.bubble');
+                bubbles.forEach(function(b) {
+                    if (b.style.display !== 'none') {
+                        const rect = b.getBoundingClientRect();
+                        if (rect.top < 6) {
+                            const overflow = 6 - rect.top;
+                            const currentBottom = parseFloat(b.style.bottom) || 0;
+                            b.style.bottom = Math.max(0, currentBottom - overflow) + 'px';
+                        }
+                    }
+                });
+            });
+            const petsContainer = document.getElementById('petsContainer');
+            if (petsContainer) {
+                bubbleObserver.observe(petsContainer, { attributes: true, subtree: true, attributeFilter: ['style'] });
+            }
+
+            // Start animation tick loop (normally triggered by extension host every 100ms)
+            const tickInterval = setInterval(function() {
+                window.postMessage({ command: 'tick' }, '*');
+            }, 100);
+
+            // Clean up on unload
+            window.addEventListener('beforeunload', function() {
+                clearInterval(tickInterval);
+                bubbleObserver.disconnect();
+            });
+        })();
+    </script>
+</body>
+</html>

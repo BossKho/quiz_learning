@@ -14,12 +14,14 @@ import {
   LogOut,
   Sparkles,
   ChevronDown,
-  Loader2
+  Loader2,
+  ImageIcon
 } from 'lucide-react';
 import { useTheme } from '@/lib/theme';
 import { signOutUser } from '@/services/firebaseService';
 import { toast } from '@/components/ui/toast';
 import { CURRENT_APP_VERSION } from '@/services/updateService';
+import { PetMenuPopover } from '@/components/StudyPet/PetMenuPopover';
 
 interface HeaderProps {
   currentView: string;
@@ -36,6 +38,7 @@ interface HeaderProps {
   streakDays?: number;
   onCheckUpdates?: () => void;
   hasPendingUpdate?: boolean;
+  onOpenWallpaperModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -53,6 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
   streakDays = 1,
   onCheckUpdates,
   hasPendingUpdate = false,
+  onOpenWallpaperModal,
 }) => {
   const { isDark, toggleTheme } = useTheme();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -232,6 +236,22 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <ArrowRightLeft className="size-3.5 text-muted-foreground" />
               <span>JSON</span>
+            </Button>
+          )}
+
+          {/* Study Pet Companion Control */}
+          <PetMenuPopover />
+
+          {/* Submerged Wallpaper Settings Modal Button */}
+          {onOpenWallpaperModal && (
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={onOpenWallpaperModal}
+              title="Tùy chỉnh ảnh nền chìm toàn ứng dụng 🖼️"
+              className="h-9 w-9 rounded-xl border border-border bg-muted/40 text-foreground hover:bg-muted transition-transform active:scale-95 cursor-pointer shadow-2xs"
+            >
+              <ImageIcon className="size-4 text-indigo-500 hover:rotate-12 transition-transform" />
             </Button>
           )}
 
