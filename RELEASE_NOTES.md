@@ -1,36 +1,39 @@
-## Quiz Learning Pro v3.0.0
+## Quiz Learning Pro v3.1.0
 
 ### What's Changed
 
-#### 1. Interactive Study Pet Companion System
-* **Desktop Pixel Companions**: Integrated 16 retro 8-bit companion pets (Akita Dog, Fox, Duck, Totoro, Capybara, Panda, Crab, Chicken, Horse, Clippy, Deno, and more) powered by the vscode-pets sprite animation engine.
-* **Themed Habitats**: Implemented 6 distinct habitat environments (Forest, Beach, Castle, Winter, Autumn, and Transparent Minimalist).
-* **Multi-Scale View & Mini Dock**: Added 3 viewport scaling modes (Small 285px non-intrusive mode, Medium 390px, Large 500px full view) along with a compact Mini Dock pill (`─`) to keep question text unobstructed during intensive sessions.
-* **Responsive Viewport Protection**: Built-in auto-docking and viewport safety safeguards that gracefully dock or hide the habitat on displays under 1400px width or 580px height.
-* **Interactive Play**: Full interactive physics support including tennis ball throwing (`🎾`), weather atmospheric effects (`✨`), and multi-pet position reset.
-* **Bubble Ceiling Clamping**: Integrated a live DOM MutationObserver to dynamically clamp speech bubbles, guaranteeing dialogue is never truncated by the viewport top edge.
+#### 1. Smart Update Notification Snooze & Version Skip Engine
+* **Flexible Snooze Durations**: Users can now postpone update notifications directly from the update modal with tailored time frames:
+  * **24 Hours (1 Day)**
+  * **3 Days**
+  * **1 Week (7 Days)**
+* **Skip Version Option**: Added a dedicated option to skip notifications entirely for the current release (`v3.1.0`), preventing recurring popups while keeping future major/minor releases unblocked.
+* **Intelligent Background Suppression**:
+  * Automatically suppresses startup popups and silences the flashing **"Bản mới!"** header alert during the active snooze window.
+  * Preserves user focus during exams, custom study sessions, and flashcard reviews without intrusive interruptions.
+* **On-Demand Manual Access & Instant Resume**:
+  * Manual update checks via the User Profile and User Dropdown Menu remain accessible at all times, bypassing the snooze filter to display release notes and update controls on demand.
+  * Active snooze status is clearly displayed with an ambient notice banner indicating the exact expiration time.
+  * One-click **"Bật lại"** (Resume Notifications) button to immediately restore regular alerts at any time.
+* **Reactive Cross-Component State Synchronization**: Snooze preferences persist locally and sync seamlessly across the application lifecycle using dedicated event broadcasts.
 
-#### 2. Custom Submerged Ambient Wallpaper Engine
-* **Local Image Integration**: Built-in file selector enabling users to import custom background images (PNG, JPG, WebP, and animated Lo-fi GIFs).
-* **Quota-Free IndexedDB Storage**: Uses dedicated IndexedDB (`QuizAppWallpaperDB`) for multi-megabyte image storage, bypassing traditional browser localStorage 5MB quota restrictions and preserving wallpapers seamlessly across restarts.
-* **Live Customization Controls**: Real-time sliders for Opacity (5% to 55%) and Backdrop Blur (0px to 16px) with instant presets.
-* **Ambient Frosted Glass Layering**: Positioned non-intrusively at `z-0` beneath application cards with acrylic glassmorphism styling, ensuring questions and examination controls remain crisp, responsive, and click-through friendly.
-* **Header Quick-Action**: One-click configuration button (`🖼️`) integrated directly into the top header next to the theme switcher.
+#### 2. Streamlined & Lean Release Distribution
+* **Installer-Only Packaging**: In accordance with distribution optimization, only the highly compressed NSIS installer executable (`QuizLearningPro_Setup.exe`) is bundled and distributed, omitting oversized portable binaries for faster download speeds and reduced bandwidth overhead.
+* **Zero Data Loss In-App Upgrades**: Full end-to-end compatibility with SQLite database preservation and cloud sync shields before applying updates.
 
-#### 3. Core Engine & Stability Improvements
-* **100% Test Coverage Across Modules**: 59 automated unit tests passing across all critical services and state engines.
-* **Zero-Warning Production Bundling**: Optimized Vite pipeline and TypeScript definitions for instantaneous launch performance.
+#### 3. Reliability & Testing
+* **100% Test Coverage for Snooze Logic**: Added automated unit tests covering duration calculation, version skipping, snooze clearing, and human-readable time formatting.
+* **All 63 Unit Tests Passing**: Full green suite across core exam engines, database synchronizers, and UI components.
 
 ---
 
 ### Installation & Updates
-* **Existing Installations**: Click **Update Now** in the in-app update banner to upgrade seamlessly.
-* **New Installations**: Download and run `QuizLearningPro_Setup.exe` from the release assets below.
+* **In-App Update**: Launch the application and click **Cập nhật tự động (In-App Update)** in the update prompt to upgrade seamlessly.
+* **Manual Setup**: Download and run `QuizLearningPro_Setup.exe` from the release assets below.
 
 ---
 
 ### Integrity Check
 ```
-SHA-256 (Setup):    DE17F175EDC70898B7ED96F2C2EA642403D99E629E38917C7F68285F10B8838B
-SHA-256 (Portable): D7867381B6555B308BCE29C482F9BB53CBF651B03C5E6DE2B118B0622AD2EFF6
+SHA-256 (Setup): 168F4FE9E55162EBFE582189F29572D2FCC643F0403F9705111814AE6E40B0F4
 ```

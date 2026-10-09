@@ -24,7 +24,7 @@ import { subscribeToAuthState, syncLocalToCloud, pullCloudToLocal, syncCloudImme
 import { AuthModal } from '@/components/AuthModal';
 import { ProfileView } from '@/views/ProfileView';
 import { LandingPage } from '@/views/LandingPage';
-import { checkForAppUpdates, type UpdateInfo } from '@/services/updateService';
+import { checkForAppUpdates, isUpdateSnoozed, type UpdateInfo } from '@/services/updateService';
 import { UpdateModal } from '@/components/UpdateModal';
 import { NotificationBar } from '@/components/NotificationBar';
 import { subscribeToLiveAnnouncements, type SystemAnnouncement } from '@/services/announcementService';
@@ -83,6 +83,16 @@ export function App() {
     return wallpaperService.subscribe((s) => {
       setWallpaperSettings(s);
     });
+  }, []);
+
+  // Subscribe to Update Snooze changes
+  const [, setSnoozeRevision] = useState(0);
+  useEffect(() => {
+    const handleSnoozeChanged = () => {
+      setSnoozeRevision((r) => r + 1);
+    };
+    window.addEventListener('quiz_update_snooze_changed', handleSnoozeChanged);
+    return () => window.removeEventListener('quiz_update_snooze_changed', handleSnoozeChanged);
   }, []);
 
   // Load data from SQLite
@@ -223,7 +233,9 @@ export function App() {
         toast.dismiss(loadingToastId);
       }
       if (info.hasUpdate) {
-        setUpdateModalOpen(true);
+        if (manual || !isUpdateSnoozed(info.latestVersion)) {
+          setUpdateModalOpen(true);
+        }
       } else if (manual) {
         toast.success(`Bạn đang sử dụng phiên bản mới nhất (v${info.currentVersion})!`);
       }
@@ -554,7 +566,7 @@ export function App() {
             onQuickSync={handleQuickSync}
             isSyncingCloud={isSyncingCloud}
             onCheckUpdates={() => handleCheckForUpdates(true)}
-            hasPendingUpdate={Boolean(updateInfo?.hasUpdate)}
+            hasPendingUpdate={Boolean(updateInfo?.hasUpdate && !isUpdateSnoozed(updateInfo.latestVersion))}
           />
         )}
 

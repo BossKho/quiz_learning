@@ -20,19 +20,30 @@ import {
   Package,
   RotateCcw,
   AlertTriangle,
-  Lock
+  Lock,
+  Clock,
+  BellOff,
+  Bell,
+  ChevronDown
 } from 'lucide-react';
 import { 
   type UpdateInfo, 
   type DownloadProgress,
+  type UpdateSnoozeSettings,
   executePreUpdateShield, 
   openExternalUrl,
   startInAppDownload,
   launchInstallerAndExit,
-  listenToDownloadProgress
+  listenToDownloadProgress,
+  getUpdateSnoozeSettings,
+  snoozeUpdates,
+  skipVersion,
+  clearSnooze,
+  formatSnoozeUntil
 } from '@/services/updateService';
 import { isTauri } from '@tauri-apps/api/core';
 import { toast } from '@/components/ui/toast';
+import { cn } from '@/lib/utils';
 
 interface UpdateModalProps {
   open: boolean;
@@ -55,6 +66,17 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   const [verifiedSha256, setVerifiedSha256] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [processStep, setProcessStep] = useState<string>('');
+  const [snoozeSettings, setSnoozeSettings] = useState<UpdateSnoozeSettings>(() => getUpdateSnoozeSettings());
+  const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
+
+  // Subscribe to snooze changes
+  useEffect(() => {
+    const handleSnoozeChanged = () => {
+      setSnoozeSettings(getUpdateSnoozeSettings());
+    };
+    window.addEventListener('quiz_update_snooze_changed', handleSnoozeChanged);
+    return () => window.removeEventListener('quiz_update_snooze_changed', handleSnoozeChanged);
+  }, []);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -65,6 +87,8 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
       setVerifiedSha256(null);
       setErrorMessage(null);
       setProcessStep('');
+      setSnoozeSettings(getUpdateSnoozeSettings());
+      setShowSnoozeMenu(false);
     }
   }, [open]);
 
@@ -148,6 +172,9 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   };
 
   const isLocked = status === 'downloading' || status === 'applying';
+  const isSnoozedByTime = Boolean(snoozeSettings.snoozedUntil && Date.now() < snoozeSettings.snoozedUntil);
+  const isVersionSkipped = Boolean(snoozeSettings.skippedVersion && snoozeSettings.skippedVersion === updateInfo.latestVersion);
+  const isCurrentlySnoozed = isSnoozedByTime || isVersionSkipped;
 
   return (
     <Dialog open={open} onOpenChange={(val) => !isLocked && onOpenChange(val)}>
@@ -198,6 +225,41 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Active Snooze / Pause Status Banner */}
+        {isCurrentlySnoozed && (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 flex items-center justify-between gap-3 animate-in fade-in">
+            <div className="flex items-center gap-2.5">
+              <div className="size-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <BellOff className="size-4" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="text-xs font-bold text-amber-700 dark:text-amber-300">
+                  {isVersionSkipped
+                    ? `Đang bỏ qua thông báo bản v${updateInfo.latestVersion}`
+                    : `Đang tạm dừng thông báo đến ${formatSnoozeUntil(snoozeSettings.snoozedUntil)}`}
+                </div>
+                <p className="text-[11px] text-amber-600/90 dark:text-amber-400/90 leading-tight">
+                  Thông báo tự động và huy hiệu trên thanh tiêu đề đã được tạm hoãn.
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                clearSnooze();
+                setSnoozeSettings(getUpdateSnoozeSettings());
+                toast.success('Đã khôi phục thông báo cập nhật!');
+              }}
+              className="text-xs shrink-0 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 rounded-xl cursor-pointer"
+            >
+              <Bell className="size-3.5 mr-1" />
+              Bật lại
+            </Button>
+          </div>
+        )}
 
         {/* Release Notes / Changelog */}
         <div className="space-y-2">
@@ -349,25 +411,134 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
         )}
 
         <DialogFooter className="flex items-center justify-between pt-2 border-t border-border sm:justify-between">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={isLocked}
-            onClick={() => onOpenChange(false)}
-            className="text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer rounded-xl"
-          >
-            Để sau
-          </Button>
+          <div className="relative">
+            {showSnoozeMenu && (
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowSnoozeMenu(false)}
+              />
+            )}
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={isLocked}
+              onClick={() => setShowSnoozeMenu(!showSnoozeMenu)}
+              className="text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer rounded-xl flex items-center gap-1.5 border border-transparent hover:border-border"
+            >
+              <Clock className="size-3.5 text-muted-foreground" />
+              <span>{isCurrentlySnoozed ? 'Đang tạm dừng' : 'Để sau / Tạm dừng'}</span>
+              <ChevronDown className={cn("size-3 transition-transform", showSnoozeMenu && "rotate-180")} />
+            </Button>
+
+            {showSnoozeMenu && (
+              <div className="absolute left-0 bottom-full mb-2 w-72 rounded-2xl border border-border bg-popover text-popover-foreground p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 space-y-1">
+                <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                  <span>Tùy chọn tạm dừng</span>
+                  <Clock className="size-3" />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSnoozeMenu(false);
+                    onOpenChange(false);
+                  }}
+                  className="w-full text-left px-2.5 py-2 rounded-xl text-xs hover:bg-muted font-medium transition-colors cursor-pointer flex items-center justify-between"
+                >
+                  <span>Để sau (nhắc lại khi mở app)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    snoozeUpdates(24);
+                    setSnoozeSettings(getUpdateSnoozeSettings());
+                    setShowSnoozeMenu(false);
+                    toast.info('Đã tạm dừng thông báo cập nhật trong 24 giờ (1 ngày).');
+                    onOpenChange(false);
+                  }}
+                  className="w-full text-left px-2.5 py-2 rounded-xl text-xs hover:bg-muted font-medium transition-colors cursor-pointer flex items-center justify-between"
+                >
+                  <span>Tạm dừng 24 giờ (1 ngày)</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">24h</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    snoozeUpdates(72);
+                    setSnoozeSettings(getUpdateSnoozeSettings());
+                    setShowSnoozeMenu(false);
+                    toast.info('Đã tạm dừng thông báo cập nhật trong 3 ngày.');
+                    onOpenChange(false);
+                  }}
+                  className="w-full text-left px-2.5 py-2 rounded-xl text-xs hover:bg-muted font-medium transition-colors cursor-pointer flex items-center justify-between"
+                >
+                  <span>Tạm dừng 3 ngày</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">3d</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    snoozeUpdates(168);
+                    setSnoozeSettings(getUpdateSnoozeSettings());
+                    setShowSnoozeMenu(false);
+                    toast.info('Đã tạm dừng thông báo cập nhật trong 1 tuần (7 ngày).');
+                    onOpenChange(false);
+                  }}
+                  className="w-full text-left px-2.5 py-2 rounded-xl text-xs hover:bg-muted font-medium transition-colors cursor-pointer flex items-center justify-between"
+                >
+                  <span>Tạm dừng 1 tuần (7 ngày)</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">7d</span>
+                </button>
+
+                <div className="my-1 border-t border-border" />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    skipVersion(updateInfo.latestVersion);
+                    setSnoozeSettings(getUpdateSnoozeSettings());
+                    setShowSnoozeMenu(false);
+                    toast.info(`Đã bỏ qua thông báo cho phiên bản v${updateInfo.latestVersion}.`);
+                    onOpenChange(false);
+                  }}
+                  className="w-full text-left px-2.5 py-2 rounded-xl text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-medium transition-colors cursor-pointer flex items-center justify-between"
+                >
+                  <span>Bỏ qua phiên bản v{updateInfo.latestVersion}</span>
+                  <BellOff className="size-3.5" />
+                </button>
+
+                {isCurrentlySnoozed && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearSnooze();
+                      setSnoozeSettings(getUpdateSnoozeSettings());
+                      setShowSnoozeMenu(false);
+                      toast.success('Đã khôi phục thông báo cập nhật.');
+                    }}
+                    className="w-full text-left px-2.5 py-2 rounded-xl text-xs text-primary hover:bg-primary/10 font-semibold transition-colors cursor-pointer flex items-center justify-between"
+                  >
+                    <span>Khôi phục thông báo ngay</span>
+                    <RotateCcw className="size-3" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={handleManualBrowserDownload}
-            className="text-xs font-semibold rounded-xl gap-1.5 cursor-pointer text-muted-foreground"
+            className="text-xs font-semibold rounded-xl gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground"
           >
-            <span>Tải thủ công qua trình duyệt</span>
+            <span>Tải qua trình duyệt</span>
             <ExternalLink className="size-3" />
           </Button>
         </DialogFooter>

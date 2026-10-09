@@ -3,7 +3,7 @@ import { syncCloudImmediate } from '@/services/firebaseService';
 import { isTauri, invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
-export const CURRENT_APP_VERSION = '3.0.0';
+export const CURRENT_APP_VERSION = '3.1.0';
 export const GITHUB_REPO_OWNER = 'BossKho';
 export const GITHUB_REPO_NAME = 'quiz_learning';
 
@@ -315,3 +315,103 @@ export async function launchInstallerAndExit(installerPath: string): Promise<voi
 
   await invoke('launch_updater_and_exit', { installerPath });
 }
+
+/* ========================================================================= */
+/* UPDATE PAUSE / SNOOZE MANAGEMENT                                          */
+/* ========================================================================= */
+
+export const STORAGE_SNOOZE_KEY = 'quiz_update_snooze_settings';
+
+export interface UpdateSnoozeSettings {
+  snoozedUntil: number | null; // Epoch ms
+  skippedVersion: string | null; // e.g. "3.1.0"
+}
+
+export const DEFAULT_SNOOZE_SETTINGS: UpdateSnoozeSettings = {
+  snoozedUntil: null,
+  skippedVersion: null,
+};
+
+export function getUpdateSnoozeSettings(): UpdateSnoozeSettings {
+  if (typeof localStorage === 'undefined') return DEFAULT_SNOOZE_SETTINGS;
+  try {
+    const raw = localStorage.getItem(STORAGE_SNOOZE_KEY);
+    if (!raw) return DEFAULT_SNOOZE_SETTINGS;
+    return { ...DEFAULT_SNOOZE_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_SNOOZE_SETTINGS;
+  }
+}
+
+export function saveUpdateSnoozeSettings(settings: UpdateSnoozeSettings): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_SNOOZE_KEY, JSON.stringify(settings));
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('quiz_update_snooze_changed', { detail: settings }));
+    }
+  } catch (err) {
+    console.error('Failed to save update snooze settings:', err);
+  }
+}
+
+/**
+ * Snooze updates for a given number of hours (e.g. 24 for 1 day, 72 for 3 days, 168 for 1 week)
+ */
+export function snoozeUpdates(durationHours: number): void {
+  const snoozedUntil = Date.now() + durationHours * 60 * 60 * 1000;
+  const current = getUpdateSnoozeSettings();
+  saveUpdateSnoozeSettings({
+    ...current,
+    snoozedUntil,
+  });
+}
+
+/**
+ * Skip a specific target version completely from auto-popup notifications
+ */
+export function skipVersion(version: string): void {
+  const current = getUpdateSnoozeSettings();
+  saveUpdateSnoozeSettings({
+    ...current,
+    skippedVersion: version,
+  });
+}
+
+/**
+ * Clear any active snooze or version skip (resume standard notifications)
+ */
+export function clearSnooze(): void {
+  saveUpdateSnoozeSettings({
+    snoozedUntil: null,
+    skippedVersion: null,
+  });
+}
+
+/**
+ * Check if notifications for a given version are currently snoozed or skipped
+ */
+export function isUpdateSnoozed(targetVersion: string): boolean {
+  const settings = getUpdateSnoozeSettings();
+  if (settings.skippedVersion && settings.skippedVersion === targetVersion) {
+    return true;
+  }
+  if (settings.snoozedUntil && Date.now() < settings.snoozedUntil) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Human-friendly formatting for snooze status
+ */
+export function formatSnoozeUntil(timestamp: number | null): string {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  return `${hours}:${minutes} ngày ${day}/${month}`;
+}
+

@@ -1,5 +1,28 @@
-import { describe, it, expect, vi } from 'vitest';
-import { parseVersion, compareVersions, checkForAppUpdates, CURRENT_APP_VERSION } from './updateService';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { 
+  parseVersion, 
+  compareVersions, 
+  checkForAppUpdates, 
+  CURRENT_APP_VERSION,
+  snoozeUpdates,
+  skipVersion,
+  clearSnooze,
+  getUpdateSnoozeSettings,
+  isUpdateSnoozed,
+  formatSnoozeUntil
+} from './updateService';
+
+if (typeof globalThis.localStorage === 'undefined') {
+  const store: Record<string, string> = {};
+  globalThis.localStorage = {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => { store[key] = value; },
+    removeItem: (key: string) => { delete store[key]; },
+    clear: () => { for (const k in store) delete store[k]; },
+    key: (i: number) => Object.keys(store)[i] || null,
+    length: 0,
+  };
+}
 
 describe('updateService', () => {
   describe('parseVersion', () => {
@@ -42,10 +65,10 @@ describe('updateService', () => {
   describe('checkForAppUpdates with mocked fetch', () => {
     it('detects available update correctly', async () => {
       const mockRelease = {
-        tag_name: 'v3.1.0',
-        name: 'Ver 3.1',
+        tag_name: 'v3.2.0',
+        name: 'Ver 3.2',
         published_at: '2026-10-07T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v3.1.0',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v3.2.0',
         body: 'Bug fixes and performance improvements',
         assets: [
           {
@@ -63,17 +86,17 @@ describe('updateService', () => {
 
       const update = await checkForAppUpdates();
       expect(update.hasUpdate).toBe(true);
-      expect(update.latestVersion).toBe('3.1.0');
+      expect(update.latestVersion).toBe('3.2.0');
       expect(update.setupAsset?.name).toBe('QuizLearningPro_Setup.exe');
       expect(update.setupAsset?.sizeFormatted).toBe('5.2 MB');
     });
 
     it('returns hasUpdate false when on latest version', async () => {
       const mockRelease = {
-        tag_name: 'v3.0.0',
-        name: 'Ver 3.0',
+        tag_name: 'v3.1.0',
+        name: 'Ver 3.1',
         published_at: '2026-10-07T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v3.0.0',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v3.1.0',
         body: 'Latest release',
         assets: [],
       };
@@ -90,10 +113,10 @@ describe('updateService', () => {
 
     it('extracts SHA-256 digest from asset when present', async () => {
       const mockReleaseWithDigest = {
-        tag_name: 'v3.0.0',
-        name: 'Ver 3.0',
+        tag_name: 'v3.2.0',
+        name: 'Ver 3.2',
         published_at: '2026-10-07T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v3.0.0',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v3.2.0',
         body: 'Release notes',
         assets: [
           {
@@ -116,10 +139,10 @@ describe('updateService', () => {
 
     it('extracts SHA-256 from release body when asset digest is missing', async () => {
       const mockReleaseWithBodyHash = {
-        tag_name: 'v3.0.0',
-        name: 'Ver 3.0',
+        tag_name: 'v3.2.0',
+        name: 'Ver 3.2',
         published_at: '2026-10-07T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v3.0.0',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v3.2.0',
         body: 'Release notes\nSHA-256: AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899\nThank you',
         assets: [
           {
@@ -137,6 +160,50 @@ describe('updateService', () => {
 
       const update = await checkForAppUpdates();
       expect(update.setupAsset?.sha256).toBe('AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899');
+    });
+  });
+
+  describe('Update Snooze / Pause management', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('correctly snoozes updates for a specific duration', () => {
+      clearSnooze();
+      expect(isUpdateSnoozed('3.2.0')).toBe(false);
+
+      snoozeUpdates(24);
+      expect(isUpdateSnoozed('3.2.0')).toBe(true);
+
+      const settings = getUpdateSnoozeSettings();
+      expect(settings.snoozedUntil).toBeGreaterThan(Date.now());
+    });
+
+    it('correctly skips a specific version', () => {
+      clearSnooze();
+      skipVersion('3.2.0');
+
+      expect(isUpdateSnoozed('3.2.0')).toBe(true);
+      expect(isUpdateSnoozed('3.3.0')).toBe(false);
+    });
+
+    it('clears snooze settings properly', () => {
+      snoozeUpdates(72);
+      skipVersion('3.2.0');
+      expect(isUpdateSnoozed('3.2.0')).toBe(true);
+
+      clearSnooze();
+      expect(isUpdateSnoozed('3.2.0')).toBe(false);
+      const settings = getUpdateSnoozeSettings();
+      expect(settings.snoozedUntil).toBeNull();
+      expect(settings.skippedVersion).toBeNull();
+    });
+
+    it('formats snooze until timestamp nicely', () => {
+      expect(formatSnoozeUntil(null)).toBe('');
+      const fixedDate = new Date(2026, 9, 10, 14, 30); // Oct 10, 2026 14:30
+      const formatted = formatSnoozeUntil(fixedDate.getTime());
+      expect(formatted).toBe('14:30 ngày 10/10');
     });
   });
 });
