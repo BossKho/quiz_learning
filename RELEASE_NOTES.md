@@ -1,39 +1,35 @@
-## Quiz Learning Pro v3.1.0
+## Quiz Learning Pro v3.2.0
 
 ### What's Changed
 
-#### 1. Smart Update Notification Snooze & Version Skip Engine
-* **Flexible Snooze Durations**: Users can now postpone update notifications directly from the update modal with tailored time frames:
-  * **24 Hours (1 Day)**
-  * **3 Days**
-  * **1 Week (7 Days)**
-* **Skip Version Option**: Added a dedicated option to skip notifications entirely for the current release (`v3.1.0`), preventing recurring popups while keeping future major/minor releases unblocked.
-* **Intelligent Background Suppression**:
-  * Automatically suppresses startup popups and silences the flashing **"Bản mới!"** header alert during the active snooze window.
-  * Preserves user focus during exams, custom study sessions, and flashcard reviews without intrusive interruptions.
-* **On-Demand Manual Access & Instant Resume**:
-  * Manual update checks via the User Profile and User Dropdown Menu remain accessible at all times, bypassing the snooze filter to display release notes and update controls on demand.
-  * Active snooze status is clearly displayed with an ambient notice banner indicating the exact expiration time.
-  * One-click **"Bật lại"** (Resume Notifications) button to immediately restore regular alerts at any time.
-* **Reactive Cross-Component State Synchronization**: Snooze preferences persist locally and sync seamlessly across the application lifecycle using dedicated event broadcasts.
+#### 1. Super WOW Motion & Visual Animation System
+* **Motion Engine Integration**: Upgraded the core animation infrastructure using Motion for React and cherry-picked tactile primitives.
+* **ClickSparks Interaction**: Lightweight canvas spark burst on clicks/taps with zero CPU overhead when idle.
+* **3D Parallax & Sheen**: Added interactive 3D card tilt with dynamic specular sheen reflection (`TiltedCard`) across Dashboard deck cards and landing showcase.
+* **Ambient Floating Dust**: Subtle floating particle atmosphere across Dashboard, Landing page hero, and Exam success screens.
+* **Matrix Decrypted Text**: Futuristic text scrambling reveal effect for topic badges and milestone headers.
+* **Magnetic Cursor Pull**: Micro-magnetic attraction on interactive buttons and navigation controls.
 
-#### 2. Streamlined & Lean Release Distribution
-* **Installer-Only Packaging**: In accordance with distribution optimization, only the highly compressed NSIS installer executable (`QuizLearningPro_Setup.exe`) is bundled and distributed, omitting oversized portable binaries for faster download speeds and reduced bandwidth overhead.
-* **Zero Data Loss In-App Upgrades**: Full end-to-end compatibility with SQLite database preservation and cloud sync shields before applying updates.
+#### 2. Enhanced Arena Visuals
+* **Study Arena Streak Glow**: Added live streak tracking with animated flame badges (`🔥 Streak 3+`) and amber glow auras around active cards.
+* **Flashcard 3D Depth**: Stacked card depth illusion for tactile physical flashcard feel.
+* **Exam Arena Tactile Feedback**: Crisp haptic-like click responses on matrix cells and options with 0ms input latency.
+* **Celebratory Confetti**: High-performance confetti cannons on study completion and passing exam scores.
 
-#### 3. Reliability & Testing
-* **100% Test Coverage for Snooze Logic**: Added automated unit tests covering duration calculation, version skipping, snooze clearing, and human-readable time formatting.
-* **All 63 Unit Tests Passing**: Full green suite across core exam engines, database synchronizers, and UI components.
+#### 3. Performance & Accessibility
+* **Reduced Motion Compliance**: Respects system-level accessibility settings with automatic simplification of parallax, 3D tilts, and particles.
+* **Zero Input Latency**: Animations run purely as non-blocking visual feedback without delaying question navigation or scoring.
+* **All 67 Unit Tests Passing**: Fully verified test suite across Leitner algorithms, update services, and UI components.
 
 ---
 
 ### Installation & Updates
-* **In-App Update**: Launch the application and click **Cập nhật tự động (In-App Update)** in the update prompt to upgrade seamlessly.
+* **In-App Update**: Launch the application and click **Cập nhật tự động (In-App Update)** in the update prompt.
 * **Manual Setup**: Download and run `QuizLearningPro_Setup.exe` from the release assets below.
 
 ---
 
 ### Integrity Check
 ```
-SHA-256 (Setup): 168F4FE9E55162EBFE582189F29572D2FCC643F0403F9705111814AE6E40B0F4
+SHA-256 (Setup): 0870A39B0D5966654F38A9A70E5A3EA69C505213FC609F65CF1A97728DE5FB80
 ```
