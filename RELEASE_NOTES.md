@@ -10,10 +10,11 @@
 * **Matrix Decrypted Text**: Futuristic text scrambling reveal effect for topic badges and milestone headers.
 * **Magnetic Cursor Pull**: Micro-magnetic attraction on interactive buttons and navigation controls.
 
-#### 2. Enhanced Arena Visuals
+#### 2. Enhanced Arena Visuals & Keyboard Ergonomics
 * **Study Arena Streak Glow**: Added live streak tracking with animated flame badges (`🔥 Streak 3+`) and amber glow auras around active cards.
 * **Flashcard 3D Depth**: Stacked card depth illusion for tactile physical flashcard feel.
 * **Exam Arena Tactile Feedback**: Crisp haptic-like click responses on matrix cells and options with 0ms input latency.
+* **Keyboard Shortcut Conflict Fix**: Restricted option selection exclusively to number keys (`1-9`), eliminating key collisions with `B` (Bookmark) and `T` (Translation).
 * **Celebratory Confetti**: High-performance confetti cannons on study completion and passing exam scores.
 
 #### 3. Performance & Accessibility
@@ -31,5 +32,5 @@
 
 ### Integrity Check
 ```
-SHA-256 (Setup): 0870A39B0D5966654F38A9A70E5A3EA69C505213FC609F65CF1A97728DE5FB80
+SHA-256 (Setup): 59CB18C15D357378AE5D8C4D6C7E3FB6E19C96AB5692A55CAE7564BCA83011DA
 ```

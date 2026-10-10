@@ -149,15 +149,9 @@ export const ExamArena = ({
         return;
       }
 
-      if (e.key >= '1' && e.key <= '4') {
+      if (e.key >= '1' && e.key <= '9') {
         const idx = parseInt(e.key, 10) - 1;
         if (currentQ && idx < currentQ.options.length) {
-          handleSelectOption(idx);
-        }
-      } else if (['a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'].includes(e.key) && !e.ctrlKey && !e.metaKey) {
-        const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3, A: 0, B: 1, C: 2, D: 3 };
-        const idx = letterMap[e.key];
-        if (currentQ && idx !== undefined && idx < currentQ.options.length) {
           handleSelectOption(idx);
         }
       } else if (e.key.toLowerCase() === 'f') {
@@ -333,6 +327,7 @@ export const ExamArena = ({
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'bg-muted text-muted-foreground border-border'
                       }`}
+                      title={`Phím tắt: Số ${idx + 1}`}
                     >
                       {letter}
                     </div>

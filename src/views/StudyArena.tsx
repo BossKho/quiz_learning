@@ -360,15 +360,9 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
         return;
       }
 
-      if (e.key >= '1' && e.key <= '4') {
+      if (e.key >= '1' && e.key <= '9') {
         const idx = parseInt(e.key, 10) - 1;
         if (currentQ && idx < currentQ.options.length) {
-          handleSelectOption(idx);
-        }
-      } else if (['a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'].includes(e.key) && !e.ctrlKey && !e.metaKey) {
-        const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3, A: 0, B: 1, C: 2, D: 3 };
-        const idx = letterMap[e.key];
-        if (currentQ && idx !== undefined && idx < currentQ.options.length) {
           handleSelectOption(idx);
         }
       } else if (e.key === ' ' || e.key === 'Enter') {
@@ -686,7 +680,10 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
                 onClick={() => handleSelectOption(idx)}
                 className={`flex items-start gap-3.5 p-4 rounded-xl border transition-colors select-none shadow-2xs ${optionStyle}`}
               >
-                <div className={`flex size-6 shrink-0 items-center justify-center rounded-md border text-xs font-mono ${badgeStyle}`}>
+                <div 
+                  className={`flex size-6 shrink-0 items-center justify-center rounded-md border text-xs font-mono ${badgeStyle}`}
+                  title={`Phím tắt: Số ${idx + 1}`}
+                >
                   {letter}
                 </div>
 
