@@ -19,6 +19,7 @@ import { prepareQuestionForSession, calculateExamResult, type ShuffledQuestion }
 import { dbService } from '@/services/db';
 import { syncCloudImmediate } from '@/services/firebaseService';
 import { useTheme } from '@/lib/theme';
+import { ClickSpark } from '@/components/motion';
 
 interface ExamArenaProps {
   session: ActiveSession;
@@ -195,7 +196,8 @@ export const ExamArena = ({
   const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-6 space-y-6 animate-in fade-in-50 duration-200">
+    <ClickSpark sparkColor="rgba(59, 130, 246, 0.85)" sparkCount={8} className="w-full">
+      <div className="max-w-6xl mx-auto px-6 py-6 space-y-6 animate-in fade-in-50 duration-200">
       {/* Top Header & Exam Status */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div className="flex items-center gap-3">
@@ -222,7 +224,7 @@ export const ExamArena = ({
         {/* Center: Timer & Actions */}
         <div className="flex items-center gap-3">
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border font-mono text-sm font-semibold transition-colors ${
-            isUrgent ? 'border-destructive bg-destructive/10 text-destructive animate-pulse' : 'border-border bg-card text-foreground'
+            isUrgent ? 'border-amber-500/70 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold' : 'border-border bg-card text-foreground'
           }`}>
             <Clock className="size-4" />
             <span>{timeFormatted}</span>
@@ -595,5 +597,6 @@ export const ExamArena = ({
         </DialogContent>
       </Dialog>
     </div>
+  </ClickSpark>
   );
 };

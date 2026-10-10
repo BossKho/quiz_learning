@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,11 +25,16 @@ import {
   HelpCircle,
   AlertCircle,
   Sun,
-  Moon
+  Moon,
+  Undo2
 } from 'lucide-react';
+import { motion, useMotionValue, useTransform } from 'motion/react';
 import type { Question, QuestionStats, ActiveSession } from '@/types/quiz';
 import { dbService } from '@/services/db';
 import { useTheme } from '@/lib/theme';
+import { toast } from '@/components/ui/toast';
+import { useAppMotionPreference } from '@/services/motionSettingsService';
+import { Confetti, CountUp, ClickSpark } from '@/components/motion';
 
 interface FlashcardArenaProps {
   deckTitle: string;
@@ -63,6 +68,26 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
 
+  // Undo History Stack
+  interface FlashcardHistoryItem {
+    index: number;
+    questionId: string;
+    rating: 'again' | 'mastered';
+    previousStats?: QuestionStats;
+  }
+  const [historyStack, setHistoryStack] = useState<FlashcardHistoryItem[]>([]);
+
+  // Motion Settings
+  const { effectiveMode } = useAppMotionPreference();
+  const isReduced = effectiveMode === 'off' || effectiveMode === 'subtle';
+
+  // Drag Motion Values & State
+  const isDraggingRef = useRef(false);
+  const dragX = useMotionValue(0);
+  const dragRotate = useTransform(dragX, [-240, 0, 240], isReduced ? [0, 0, 0] : [-7, 0, 7]);
+  const dragBadgeAgainOpacity = useTransform(dragX, [-120, -40, 0], [1, 0.4, 0]);
+  const dragBadgeMasteredOpacity = useTransform(dragX, [0, 40, 120], [0, 0.4, 1]);
+
   // Generate or maintain session id for progress tracking
   const [sessionId] = useState<string>(() => initialSession?.id || `flashcard_${Date.now()}`);
 
@@ -70,6 +95,11 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
   const qId = currentQ?.id;
   const effectiveStats = qId ? localStats[qId] || currentQ?.stats : undefined;
   const isBookmarked = Boolean(effectiveStats?.is_bookmarked);
+
+  // Reset drag position on card change
+  useEffect(() => {
+    dragX.set(0);
+  }, [currentIndex, dragX]);
 
   // Counts
   const totalCount = activeQuestions.length;
@@ -140,6 +170,17 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
     const newHistory = { ...reviewHistory, [qId]: rating };
     setReviewHistory(newHistory);
 
+    // Save to Undo stack
+    setHistoryStack((prev) => [
+      ...prev,
+      {
+        index: currentIndex,
+        questionId: qId,
+        rating,
+        previousStats: effectiveStats,
+      },
+    ]);
+
     // Update SQLite in background
     try {
       const updated = await dbService.updateQuestionStats(qId, isCorrect);
@@ -158,7 +199,32 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
       setIsCompleted(true);
       persistSessionProgress(activeQuestions.length, newHistory, true);
     }
-  }, [currentQ, qId, currentIndex, activeQuestions.length, reviewHistory, persistSessionProgress]);
+  }, [currentQ, qId, currentIndex, activeQuestions.length, reviewHistory, effectiveStats, persistSessionProgress]);
+
+  // Undo last rating
+  const handleUndo = useCallback(async () => {
+    if (historyStack.length === 0) return;
+    const lastItem = historyStack[historyStack.length - 1];
+    setHistoryStack((prev) => prev.slice(0, -1));
+
+    const updatedHistory = { ...reviewHistory };
+    delete updatedHistory[lastItem.questionId];
+    setReviewHistory(updatedHistory);
+
+    setCurrentIndex(lastItem.index);
+    setIsFlipped(false);
+    setIsCompleted(false);
+
+    if (lastItem.previousStats) {
+      setLocalStats((prev) => ({
+        ...prev,
+        [lastItem.questionId]: lastItem.previousStats!,
+      }));
+    }
+
+    persistSessionProgress(lastItem.index, updatedHistory, false);
+    toast.info('Đã hoàn tác đánh giá thẻ vừa rồi');
+  }, [historyStack, reviewHistory, persistSessionProgress]);
 
   // Toggle Bookmark
   const handleToggleBookmark = useCallback(async () => {
@@ -231,6 +297,13 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
         return;
       }
 
+      // Undo shortcut (Ctrl+Z, Cmd+Z or U)
+      if (((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') || e.key.toLowerCase() === 'u') {
+        e.preventDefault();
+        handleUndo();
+        return;
+      }
+
       if (e.code === 'Space') {
         e.preventDefault();
         handleFlip();
@@ -254,7 +327,7 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleFlip, handleRate, handleToggleBookmark, handleRequestExit, exitConfirmOpen]);
+  }, [handleFlip, handleRate, handleUndo, handleToggleBookmark, handleRequestExit, exitConfirmOpen]);
 
   // If completed summary screen
   if (isCompleted) {
@@ -263,77 +336,94 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
     const hasMistakes = againCount > 0;
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 max-w-2xl mx-auto animate-in fade-in duration-300">
-        <Card className="w-full p-6 sm:p-8 bg-card border-border/80 shadow-2xl rounded-3xl text-center space-y-6">
-          <div className="size-16 rounded-2xl bg-primary/10 text-primary mx-auto flex items-center justify-center shadow-xs">
-            <Trophy className="size-8 text-amber-500 fill-amber-500/20" />
-          </div>
-
-          <div className="space-y-2">
-            <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-bold">
-              Hoàn thành phiên lật thẻ
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-foreground">
-              Tổng kết Flashcard
-            </h2>
-            <p className="text-xs text-muted-foreground max-w-md mx-auto">
-              Bạn đã lướt qua tất cả <strong>{totalReviewed}</strong> câu hỏi trong phiên này. Thứ hạng Hộp Leitner đã được cập nhật trực tiếp vào hệ thống.
-            </p>
-          </div>
-
-          {/* Stats Badges */}
-          <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-muted/40 border border-border/60">
-            <div className="space-y-1">
-              <div className="text-xl sm:text-2xl font-black text-foreground font-mono">{ratePercent}%</div>
-              <div className="text-[11px] text-muted-foreground">Tỷ lệ thuộc bài</div>
+      <ClickSpark sparkColor="rgba(99, 102, 241, 0.85)" sparkCount={8} className="w-full">
+        <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 max-w-2xl mx-auto animate-in fade-in duration-300">
+          {ratePercent >= 70 && <Confetti particleCount={55} />}
+          <Card className="w-full p-6 sm:p-8 bg-card border-border/80 shadow-2xl rounded-3xl text-center space-y-6">
+            <div className="size-16 rounded-2xl bg-primary/10 text-primary mx-auto flex items-center justify-center shadow-xs">
+              <Trophy className="size-8 text-amber-500 fill-amber-500/20" />
             </div>
-            <div className="space-y-1">
-              <div className="text-xl sm:text-2xl font-black text-emerald-400 font-mono flex items-center justify-center gap-1">
-                <CheckCircle2 className="size-4.5" /> {masteredCount}
+
+            <div className="space-y-2">
+              <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-bold">
+                Hoàn thành phiên lật thẻ
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-foreground">
+                Tổng kết Flashcard
+              </h2>
+              <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                Bạn đã lướt qua tất cả <strong>{totalReviewed}</strong> câu hỏi trong phiên này. Thứ hạng Hộp Leitner đã được cập nhật trực tiếp vào hệ thống.
+              </p>
+            </div>
+
+            {/* Stats Badges */}
+            <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-muted/40 border border-border/60">
+              <div className="space-y-1">
+                <div className="text-xl sm:text-2xl font-black text-foreground font-mono">
+                  <CountUp to={ratePercent} />%
+                </div>
+                <div className="text-[11px] text-muted-foreground">Tỷ lệ thuộc bài</div>
               </div>
-              <div className="text-[11px] text-muted-foreground">Đã thuộc (+1 Box)</div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-xl sm:text-2xl font-black text-red-400 font-mono flex items-center justify-center gap-1">
-                <XCircle className="size-4.5" /> {againCount}
+              <div className="space-y-1">
+                <div className="text-xl sm:text-2xl font-black text-emerald-400 font-mono flex items-center justify-center gap-1">
+                  <CheckCircle2 className="size-4.5" /> <CountUp to={masteredCount} />
+                </div>
+                <div className="text-[11px] text-muted-foreground">Đã thuộc (+1 Box)</div>
               </div>
-              <div className="text-[11px] text-muted-foreground">Cần ôn lại (Box 1)</div>
+              <div className="space-y-1">
+                <div className="text-xl sm:text-2xl font-black text-red-400 font-mono flex items-center justify-center gap-1">
+                  <XCircle className="size-4.5" /> <CountUp to={againCount} />
+                </div>
+                <div className="text-[11px] text-muted-foreground">Cần ôn lại (Box 1)</div>
+              </div>
             </div>
-          </div>
 
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            {hasMistakes && (
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              {historyStack.length > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={handleUndo}
+                  className="flex-1 h-11 rounded-xl border-border/80 text-foreground font-semibold cursor-pointer active:scale-95"
+                  title="Quay lại thẻ cuối cùng đã lật (Ctrl+Z)"
+                >
+                  <Undo2 className="size-4 mr-2" />
+                  Hoàn tác thẻ cuối
+                </Button>
+              )}
+
+              {hasMistakes && (
+                <Button
+                  variant="default"
+                  onClick={handleReviewMistakesOnly}
+                  className="flex-1 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer active:scale-95 shadow-md flex items-center justify-center gap-2"
+                >
+                  <RotateCcw className="size-4" />
+                  Ôn ngay {againCount} câu chưa nhớ
+                </Button>
+              )}
+
               <Button
-                variant="default"
-                onClick={handleReviewMistakesOnly}
-                className="flex-1 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer active:scale-95 shadow-md flex items-center justify-center gap-2"
+                variant="outline"
+                onClick={handleRestartAll}
+                className="flex-1 h-11 rounded-xl border-border/80 text-foreground font-semibold cursor-pointer active:scale-95"
               >
-                <RotateCcw className="size-4" />
-                Ôn ngay {againCount} câu chưa nhớ
+                <RotateCw className="size-4 mr-2" />
+                Luyện lại toàn bộ ({totalCount} câu)
               </Button>
-            )}
 
-            <Button
-              variant="outline"
-              onClick={handleRestartAll}
-              className="flex-1 h-11 rounded-xl border-border/80 text-foreground font-semibold cursor-pointer active:scale-95"
-            >
-              <RotateCw className="size-4 mr-2" />
-              Luyện lại toàn bộ ({totalCount} câu)
-            </Button>
-
-            <Button
-              variant="secondary"
-              onClick={onExit}
-              className="flex-1 h-11 rounded-xl font-bold cursor-pointer active:scale-95"
-            >
-              <ArrowLeft className="size-4 mr-2" />
-              Về Trang chủ
-            </Button>
-          </div>
-        </Card>
-      </div>
+              <Button
+                variant="secondary"
+                onClick={onExit}
+                className="flex-1 h-11 rounded-xl font-bold cursor-pointer active:scale-95"
+              >
+                <ArrowLeft className="size-4 mr-2" />
+                Về Trang chủ
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </ClickSpark>
     );
   }
 
@@ -354,7 +444,8 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col justify-between p-3 sm:p-6 max-w-5xl mx-auto selection:bg-primary/20 select-none">
+    <ClickSpark sparkColor="rgba(99, 102, 241, 0.85)" sparkCount={8} className="w-full">
+      <div className="min-h-screen bg-background text-foreground flex flex-col justify-between p-3 sm:p-6 max-w-5xl mx-auto selection:bg-primary/20 select-none">
       {/* Top Navigation Bar */}
       <div className="flex items-center justify-between gap-3 pb-3 border-b border-border/50">
         <div className="flex items-center gap-2">
@@ -375,6 +466,23 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
 
         {/* Card Counter & Score tally */}
         <div className="flex items-center gap-2">
+          {/* Undo Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleUndo}
+            disabled={historyStack.length === 0}
+            className={`h-8.5 px-2.5 rounded-xl border text-xs font-semibold cursor-pointer active:scale-95 transition-all ${
+              historyStack.length > 0
+                ? 'border-border/80 text-foreground hover:bg-muted'
+                : 'border-border/40 text-muted-foreground/40 pointer-events-none'
+            }`}
+            title="Hoàn tác thẻ vừa đánh giá (Ctrl+Z hoặc phím U)"
+          >
+            <Undo2 className="size-3.5 sm:mr-1" />
+            <span className="hidden sm:inline">Hoàn tác</span>
+          </Button>
+
           <Badge variant="outline" className="font-mono text-xs px-2.5 py-1 font-bold">
             Thẻ {currentIndex + 1} / {totalCount}
           </Badge>
@@ -444,18 +552,83 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
       {/* Flashcard 3D Interactive Card */}
       <div className="flex-1 flex flex-col justify-center my-auto py-3">
         <div 
-          onClick={handleFlip}
-          className="perspective-1000 w-full min-h-[480px] sm:min-h-[520px] cursor-pointer group"
+          className="perspective-1000 w-full min-h-[480px] sm:min-h-[520px] select-none relative"
         >
-          <div
-            className={`relative w-full h-full min-h-[480px] sm:min-h-[520px] rounded-3xl border border-border/90 shadow-xl transition-transform duration-500 transform-style-3d bg-card ${
-              isFlipped ? 'rotate-y-180 border-primary/50' : 'hover:border-primary/40'
-            }`}
+          {/* Stacked Under-Cards Depth Illusion */}
+          {currentIndex < totalCount - 1 && (
+            <>
+              <div className="absolute inset-x-3 -bottom-2 h-full rounded-3xl bg-card/60 border border-border/40 shadow-sm -z-10 pointer-events-none scale-[0.98] translate-y-2 opacity-70" />
+              {currentIndex < totalCount - 2 && (
+                <div className="absolute inset-x-6 -bottom-4 h-full rounded-3xl bg-card/40 border border-border/30 shadow-xs -z-20 pointer-events-none scale-[0.96] translate-y-4 opacity-40" />
+              )}
+            </>
+          )}
+
+          <motion.div
+            key={currentQ.id}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.65}
+            dragSnapToOrigin={true}
+            onDragStart={() => {
+              isDraggingRef.current = true;
+            }}
+            onDragEnd={(_e, info) => {
+              setTimeout(() => {
+                isDraggingRef.current = false;
+              }, 60);
+
+              const threshold = 100;
+              if (info.offset.x > threshold) {
+                handleRate('mastered');
+              } else if (info.offset.x < -threshold) {
+                handleRate('again');
+              }
+            }}
+            onClick={() => {
+              if (isDraggingRef.current) return;
+              handleFlip();
+            }}
+            style={{
+              x: dragX,
+              rotate: dragRotate,
+              transformStyle: isReduced ? 'flat' : 'preserve-3d',
+            }}
+            animate={
+              isReduced
+                ? { opacity: 1 }
+                : {
+                    rotateY: isFlipped ? 180 : 0,
+                  }
+            }
+            transition={{
+              type: 'spring',
+              stiffness: 260,
+              damping: 24,
+            }}
+            className="relative w-full h-full min-h-[480px] sm:min-h-[520px] rounded-3xl border border-border/90 shadow-xl bg-card cursor-grab active:cursor-grabbing group hover:border-primary/40 transition-colors"
           >
+            {/* Visual Drag Badges */}
+            <motion.div
+              style={{ opacity: dragBadgeMasteredOpacity }}
+              className="absolute top-4 left-4 z-40 pointer-events-none px-3.5 py-1.5 rounded-full bg-emerald-500 text-white font-mono font-black text-xs sm:text-sm shadow-lg flex items-center gap-1.5"
+            >
+              <Check className="size-4 stroke-[3]" /> ĐÃ THUỘC (+1 Box)
+            </motion.div>
+
+            <motion.div
+              style={{ opacity: dragBadgeAgainOpacity }}
+              className="absolute top-4 right-4 z-40 pointer-events-none px-3.5 py-1.5 rounded-full bg-red-500 text-white font-mono font-black text-xs sm:text-sm shadow-lg flex items-center gap-1.5"
+            >
+              <X className="size-4 stroke-[3]" /> CHƯA NHỚ (Hộp 1)
+            </motion.div>
+
             {/* FRONT FACE (Question + ALL 4 Options) */}
-            <div className={`absolute inset-0 w-full h-full p-6 sm:p-8 flex flex-col justify-between backface-hidden rounded-3xl bg-card overflow-y-auto ${
-              isFlipped ? 'pointer-events-none' : ''
-            }`}>
+            <div className={`absolute inset-0 w-full h-full p-6 sm:p-8 flex flex-col justify-between rounded-3xl bg-card overflow-y-auto ${
+              isReduced
+                ? (isFlipped ? 'hidden pointer-events-none' : 'block')
+                : (isFlipped ? 'pointer-events-none' : '')
+            } ${!isReduced ? 'backface-hidden' : ''}`}>
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-3">
                   <div className="flex items-center gap-2">
@@ -521,15 +694,17 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
                   Bấm <strong className="text-foreground font-mono">Space</strong> hoặc click thẻ để xem đáp án chuẩn
                 </span>
                 <span className="text-[10.5px] opacity-70">
-                  Phím tắt: 1 Chưa nhớ · 2 Đã thuộc
+                  Vuốt ngang hoặc phím: 1 Chưa nhớ · 2 Đã thuộc
                 </span>
               </div>
             </div>
 
             {/* BACK FACE (Highlighted Answer + ALL Options + Explanation) */}
-            <div className={`absolute inset-0 w-full h-full p-6 sm:p-8 flex flex-col justify-between backface-hidden rotate-y-180 rounded-3xl bg-card overflow-y-auto ${
-              !isFlipped ? 'pointer-events-none' : ''
-            }`}>
+            <div className={`absolute inset-0 w-full h-full p-6 sm:p-8 flex flex-col justify-between rounded-3xl bg-card overflow-y-auto ${
+              isReduced
+                ? (!isFlipped ? 'hidden pointer-events-none' : 'block')
+                : (!isFlipped ? 'pointer-events-none' : '')
+            } ${!isReduced ? 'backface-hidden rotate-y-180' : ''}`}>
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-3">
                   <div className="flex items-center gap-2">
@@ -608,11 +783,11 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
                   Bấm <strong className="text-foreground font-mono">Space</strong> để lật lại câu hỏi
                 </span>
                 <span className="text-[10.5px] opacity-70">
-                  Chọn Chưa nhớ (1) hoặc Đã thuộc (2) bên dưới
+                  Vuốt ngang hoặc phím: 1 Chưa nhớ · 2 Đã thuộc
                 </span>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -710,6 +885,7 @@ export const FlashcardArena: React.FC<FlashcardArenaProps> = ({
         </DialogContent>
       </Dialog>
     </div>
+  </ClickSpark>
   );
 };
 

@@ -13,6 +13,7 @@ import {
   Info
 } from 'lucide-react';
 import type { ExamResultSummary, Question } from '@/types/quiz';
+import { Confetti, CountUp, ClickSpark, FloatingDust } from '@/components/motion';
 
 interface ExamReviewProps {
   result: ExamResultSummary;
@@ -46,7 +47,11 @@ export const ExamReview: React.FC<ExamReviewProps> = ({
   const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 space-y-8 animate-in fade-in-50 duration-200">
+    <ClickSpark sparkColor={result.passed ? "rgba(16, 185, 129, 0.85)" : "rgba(239, 68, 68, 0.85)"} sparkCount={8} className="w-full">
+      <div className="max-w-4xl mx-auto px-6 py-8 space-y-8 animate-in fade-in-50 duration-200 relative">
+        {result.passed && <FloatingDust count={16} className="opacity-50" />}
+        {result.passed && <Confetti durationMs={3200} />}
+
       {/* Top Banner / Score Card */}
       <Card className="p-8 border-border bg-gradient-to-b from-card to-muted/20">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -71,7 +76,7 @@ export const ExamReview: React.FC<ExamReviewProps> = ({
             <div className={`text-4xl font-black font-mono tracking-tight ${
               result.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'
             }`}>
-              {result.score_percent}%
+              <CountUp to={result.score_percent} />%
             </div>
             <div className="text-xs text-muted-foreground mt-1 font-medium">
               {result.correct_count} / {result.total_questions} Correct
@@ -255,5 +260,6 @@ export const ExamReview: React.FC<ExamReviewProps> = ({
         })}
       </div>
     </div>
+  </ClickSpark>
   );
 };

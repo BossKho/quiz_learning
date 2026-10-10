@@ -40,10 +40,12 @@ import {
   Crown,
   Trash2,
   Bell,
-  Users
+  Users,
+  SlidersHorizontal
 } from 'lucide-react';
 import { toast } from '@/components/ui/toast';
 import { CURRENT_APP_VERSION } from '@/services/updateService';
+import { useAppMotionPreference, type MotionPreference } from '@/services/motionSettingsService';
 import { 
   isUserAdmin, 
   sendSystemAnnouncement, 
@@ -93,6 +95,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [user, setUser] = useState<User | null>(getCurrentUser());
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { preference: motionPref, setPreference: setMotionPref } = useAppMotionPreference();
 
   // Edit Name State
   const [isEditingName, setIsEditingName] = useState(false);
@@ -809,6 +812,61 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 )}
               </Button>
             </form>
+          </div>
+
+          {/* Cài Đặt Hiệu Ứng & Chuyển Động (Motion & Animation) */}
+          <div className="space-y-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black text-foreground flex items-center gap-2">
+                <SlidersHorizontal className="size-4 text-primary" />
+                Hiệu Ứng & Chuyển Động
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                {
+                  id: 'system' as MotionPreference,
+                  label: 'Theo hệ thống',
+                  desc: 'Tự động theo Windows OS',
+                },
+                {
+                  id: 'rich' as MotionPreference,
+                  label: 'Đầy đủ (Rich)',
+                  desc: 'Lò xo 3D, Spotlight, Confetti',
+                },
+                {
+                  id: 'subtle' as MotionPreference,
+                  label: 'Tối giản (Subtle)',
+                  desc: 'Mờ nhẹ, tắt 3D & Pháo hoa',
+                },
+                {
+                  id: 'off' as MotionPreference,
+                  label: 'Tắt hoạt ảnh (Off)',
+                  desc: '0ms delay, chuyển tức thì',
+                },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    setMotionPref(opt.id);
+                    toast.success(`Đã đổi chế độ chuyển động: ${opt.label}`);
+                  }}
+                  className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                    motionPref === opt.id
+                      ? 'border-primary bg-primary/10 shadow-2xs ring-1 ring-primary/40'
+                      : 'border-border/70 bg-background/50 hover:bg-muted/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-xs font-bold text-foreground">{opt.label}</span>
+                    {motionPref === opt.id && <Check className="size-3.5 text-primary stroke-[3]" />}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-tight">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* App Version & Update Section */}

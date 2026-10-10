@@ -17,7 +17,8 @@ import {
   Moon,
   Trophy,
   RotateCcw,
-  RotateCw
+  RotateCw,
+  Zap
 } from 'lucide-react';
 import {
   Dialog,
@@ -32,6 +33,8 @@ import { prepareQuestionForSession, isAnswerCorrect, type ShuffledQuestion } fro
 import { dbService } from '@/services/db';
 import { triggerAutoCloudSync, syncCloudImmediate } from '@/services/firebaseService';
 import { useTheme } from '@/lib/theme';
+import { motion } from 'motion/react';
+import { ClickSpark, Confetti } from '@/components/motion';
 
 interface StudyArenaProps {
   session: ActiveSession;
@@ -62,6 +65,7 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
   const [localStats, setLocalStats] = useState<Record<string, QuestionStats>>({});
   const [isCompleted, setIsCompleted] = useState(session.is_completed || false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  const [streak, setStreak] = useState(0);
   const { isDark, toggleTheme } = useTheme();
 
   // Reset state whenever active session ID changes
@@ -103,6 +107,11 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
       setShowExplanationOverride(true);
 
       const correct = isAnswerCorrect([optionIdx], currentQ.answer);
+      if (correct) {
+        setStreak((prev) => prev + 1);
+      } else {
+        setStreak(0);
+      }
       try {
         const updatedStats = await dbService.updateQuestionStats(qId, correct);
         setLocalStats((prev) => ({ ...prev, [qId]: updatedStats }));
@@ -144,6 +153,11 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
     setShowExplanationOverride(true);
 
     const correct = isAnswerCorrect(selectedOptions, currentQ.answer);
+    if (correct) {
+      setStreak((prev) => prev + 1);
+    } else {
+      setStreak(0);
+    }
     try {
       const updatedStats = await dbService.updateQuestionStats(qId, correct);
       setLocalStats((prev) => ({ ...prev, [qId]: updatedStats }));
@@ -401,85 +415,88 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
   if (isCompleted) {
     const hasMistakes = studyStats.incorrectQuestions.length > 0;
     return (
-      <div className="max-w-2xl mx-auto px-6 py-12 animate-in fade-in-50 duration-300">
-        <Card className="p-8 sm:p-10 text-center space-y-6 border-border bg-card shadow-xl rounded-3xl">
-          <div className="size-20 rounded-3xl bg-gradient-to-tr from-amber-500/20 via-primary/20 to-emerald-500/20 flex items-center justify-center mx-auto text-amber-500 border border-amber-500/30 shadow-lg shadow-amber-500/10">
-            <Trophy className="size-10 text-amber-500" />
-          </div>
-
-          <div className="space-y-2">
-            <Badge variant="outline" className="text-xs font-mono uppercase tracking-wider font-bold text-primary border-primary/30 bg-primary/5">
-              Hoàn thành bài học
-            </Badge>
-            <h2 className="text-2xl sm:text-3xl font-black text-foreground">
-              Tổng Kết Phiên Học Tập
-            </h2>
-            <p className="text-xs text-muted-foreground max-w-md mx-auto">
-              Bạn đã hoàn thành bộ đề <strong>{session.deck_title}</strong>. Tiến độ học và thứ hạng hộp Leitner đã được tự động lưu trữ và đồng bộ an toàn.
-            </p>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-muted/40 border border-border/80">
-            <div className="space-y-1">
-              <div className="text-xl sm:text-2xl font-black text-foreground font-mono">
-                {studyStats.accuracyPercent}%
-              </div>
-              <div className="text-[11px] text-muted-foreground">Độ chính xác</div>
+      <ClickSpark sparkColor="rgba(245, 158, 11, 0.85)" sparkCount={8} sparkSize={9} className="w-full">
+        {studyStats.accuracyPercent >= 70 && <Confetti durationMs={3200} />}
+        <div className="max-w-2xl mx-auto px-6 py-12 animate-in fade-in-50 duration-300">
+          <Card className="p-8 sm:p-10 text-center space-y-6 border-border bg-card shadow-xl rounded-3xl">
+            <div className="size-20 rounded-3xl bg-gradient-to-tr from-amber-500/20 via-primary/20 to-emerald-500/20 flex items-center justify-center mx-auto text-amber-500 border border-amber-500/30 shadow-lg shadow-amber-500/10">
+              <Trophy className="size-10 text-amber-500" />
             </div>
-            <div className="space-y-1">
-              <div className="text-xl sm:text-2xl font-black text-emerald-500 font-mono flex items-center justify-center gap-1">
-                <CheckCircle2 className="size-4.5" /> {studyStats.correctCount}
-              </div>
-              <div className="text-[11px] text-muted-foreground">Trả lời đúng</div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-xl sm:text-2xl font-black text-destructive font-mono flex items-center justify-center gap-1">
-                <XCircle className="size-4.5" /> {studyStats.incorrectCount}
-              </div>
-              <div className="text-[11px] text-muted-foreground">Cần xem lại</div>
-            </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            {hasMistakes && (
+            <div className="space-y-2">
+              <Badge variant="outline" className="text-xs font-mono uppercase tracking-wider font-bold text-primary border-primary/30 bg-primary/5">
+                Hoàn thành bài học
+              </Badge>
+              <h2 className="text-2xl sm:text-3xl font-black text-foreground">
+                Tổng Kết Phiên Học Tập
+              </h2>
+              <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                Bạn đã hoàn thành bộ đề <strong>{session.deck_title}</strong>. Tiến độ học và thứ hạng hộp Leitner đã được tự động lưu trữ và đồng bộ an toàn.
+              </p>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-muted/40 border border-border/80">
+              <div className="space-y-1">
+                <div className="text-xl sm:text-2xl font-black text-foreground font-mono">
+                  {studyStats.accuracyPercent}%
+                </div>
+                <div className="text-[11px] text-muted-foreground">Độ chính xác</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xl sm:text-2xl font-black text-emerald-500 font-mono flex items-center justify-center gap-1">
+                  <CheckCircle2 className="size-4.5" /> {studyStats.correctCount}
+                </div>
+                <div className="text-[11px] text-muted-foreground">Trả lời đúng</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xl sm:text-2xl font-black text-destructive font-mono flex items-center justify-center gap-1">
+                  <XCircle className="size-4.5" /> {studyStats.incorrectCount}
+                </div>
+                <div className="text-[11px] text-muted-foreground">Cần xem lại</div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              {hasMistakes && (
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    if (onPracticeWrongQuestions) {
+                      onPracticeWrongQuestions(studyStats.incorrectQuestions, session.deck_id, session.deck_title);
+                    } else {
+                      handleReviewMistakesOnly();
+                    }
+                  }}
+                  className="flex-1 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer active:scale-95 shadow-md flex items-center justify-center gap-2"
+                >
+                  <RotateCcw className="size-4" />
+                  Ôn ngay {studyStats.incorrectCount} câu sai
+                </Button>
+              )}
+
               <Button
-                variant="default"
-                onClick={() => {
-                  if (onPracticeWrongQuestions) {
-                    onPracticeWrongQuestions(studyStats.incorrectQuestions, session.deck_id, session.deck_title);
-                  } else {
-                    handleReviewMistakesOnly();
-                  }
-                }}
-                className="flex-1 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer active:scale-95 shadow-md flex items-center justify-center gap-2"
+                variant="outline"
+                onClick={handleRestartAll}
+                className="flex-1 h-11 rounded-xl border-border/80 text-foreground font-semibold cursor-pointer active:scale-95"
               >
-                <RotateCcw className="size-4" />
-                Ôn ngay {studyStats.incorrectCount} câu sai
+                <RotateCw className="size-4 mr-2" />
+                Luyện lại toàn bộ ({studyStats.totalCount} câu)
               </Button>
-            )}
 
-            <Button
-              variant="outline"
-              onClick={handleRestartAll}
-              className="flex-1 h-11 rounded-xl border-border/80 text-foreground font-semibold cursor-pointer active:scale-95"
-            >
-              <RotateCw className="size-4 mr-2" />
-              Luyện lại toàn bộ ({studyStats.totalCount} câu)
-            </Button>
-
-            <Button
-              variant="secondary"
-              onClick={onExit}
-              className="flex-1 h-11 rounded-xl font-bold cursor-pointer active:scale-95"
-            >
-              <ArrowLeft className="size-4 mr-2" />
-              Về Trang chủ
-            </Button>
-          </div>
-        </Card>
-      </div>
+              <Button
+                variant="secondary"
+                onClick={onExit}
+                className="flex-1 h-11 rounded-xl font-bold cursor-pointer active:scale-95"
+              >
+                <ArrowLeft className="size-4 mr-2" />
+                Về Trang chủ
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </ClickSpark>
     );
   }
 
@@ -492,22 +509,29 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
   const isCorrect = isAnswerSubmitted ? isAnswerCorrect(selectedOptions, currentQ.answer) : false;
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-6 space-y-6 animate-in fade-in-50 duration-200">
-      {/* Top Header & Navigation */}
-      <div className="flex items-center justify-between gap-4 border-b border-border/80 pb-4">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={handleRequestExit} className="gap-1.5 text-xs font-semibold cursor-pointer active:scale-95">
-            <ArrowLeft className="size-3.5" />
-            Thoát (Esc)
-          </Button>
-          <div className="h-4 w-px bg-border" />
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-foreground">{session.deck_title}</span>
-            <Badge variant="success" className="text-[10px] font-mono uppercase">
-              Chế độ Học tập
-            </Badge>
+    <ClickSpark sparkColor="rgba(245, 158, 11, 0.85)" sparkCount={8} sparkSize={9} className="w-full">
+      <div className="max-w-4xl mx-auto px-6 py-6 space-y-6 animate-in fade-in-50 duration-200">
+        {/* Top Header & Navigation */}
+        <div className="flex items-center justify-between gap-4 border-b border-border/80 pb-4">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={handleRequestExit} className="gap-1.5 text-xs font-semibold cursor-pointer active:scale-95">
+              <ArrowLeft className="size-3.5" />
+              Thoát (Esc)
+            </Button>
+            <div className="h-4 w-px bg-border" />
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-foreground">{session.deck_title}</span>
+              <Badge variant="success" className="text-[10px] font-mono uppercase">
+                Chế độ Học tập
+              </Badge>
+              {streak >= 3 && (
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-500 text-xs font-bold animate-pulse shadow-xs">
+                  <Zap className="size-3.5 fill-current" />
+                  <span>Chuỗi {streak} đúng! 🔥</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
         <div className="flex items-center gap-2">
           {/* Finish / Nộp bài sớm */}
@@ -576,7 +600,13 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
       </div>
 
       {/* Question Card */}
-      <Card className="p-6 md:p-8 space-y-6 border-border bg-card shadow-sm">
+      <motion.div
+        key={currentQ.id}
+        initial={{ opacity: 0, x: 10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
+      >
+        <Card className={`p-6 md:p-8 space-y-6 bg-card transition-all duration-300 ${streak >= 3 ? 'border-amber-500/50 shadow-lg shadow-amber-500/15 ring-1 ring-amber-500/30' : 'border-border shadow-sm'}`}>
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <Badge variant="outline" className="font-mono text-xs font-semibold bg-muted/60">
@@ -638,11 +668,23 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
               badgeStyle = 'bg-primary text-primary-foreground border-primary';
             }
 
+            const isIncorrectSelection = isAnswerSubmitted && isSelected && !isCorrectOption;
+            const isCorrectSelection = isAnswerSubmitted && isCorrectOption;
+
             return (
-              <div
+              <motion.div
                 key={idx}
+                whileTap={!isAnswerSubmitted ? { scale: 0.985 } : undefined}
+                animate={
+                  isIncorrectSelection 
+                    ? { x: [-3, 3, -2, 2, 0] } 
+                    : isCorrectSelection 
+                    ? { scale: [1, 1.015, 1] } 
+                    : {}
+                }
+                transition={{ duration: 0.2 }}
                 onClick={() => handleSelectOption(idx)}
-                className={`flex items-start gap-3.5 p-4 rounded-xl border transition-all select-none shadow-2xs ${optionStyle}`}
+                className={`flex items-start gap-3.5 p-4 rounded-xl border transition-colors select-none shadow-2xs ${optionStyle}`}
               >
                 <div className={`flex size-6 shrink-0 items-center justify-center rounded-md border text-xs font-mono ${badgeStyle}`}>
                   {letter}
@@ -658,7 +700,7 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
                 </div>
 
                 {statusIcon}
-              </div>
+              </motion.div>
             );
           })}
         </div>
@@ -757,6 +799,7 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
           </div>
         )}
       </Card>
+      </motion.div>
 
       {/* Keyboard Shortcut Legend Bar */}
       <div className="flex flex-wrap items-center justify-center gap-4 py-2 text-[11px] text-muted-foreground/80 border-t border-border/50">
@@ -827,5 +870,6 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
         </DialogContent>
       </Dialog>
     </div>
+  </ClickSpark>
   );
 };

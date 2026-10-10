@@ -31,6 +31,8 @@ import { subscribeToLiveAnnouncements, type SystemAnnouncement } from '@/service
 import { StudyPet } from '@/components/StudyPet/StudyPet';
 import { WallpaperModal } from '@/components/WallpaperModal';
 import { wallpaperService, type WallpaperSettings } from '@/services/wallpaperService';
+import { AnimatePresence } from 'motion/react';
+import { MotionView } from '@/components/motion';
 
 export function App() {
   const [isDbReady, setIsDbReady] = useState(false);
@@ -572,97 +574,113 @@ export function App() {
 
       {/* Main Content Area */}
       <main className="w-full">
-        {currentView === 'profile' && (
-          <ProfileView
-            onBackToDashboard={handleExitToDashboard}
-            onStartWeakPractice={handleStartWeakPractice}
-            onReloadData={reloadData}
-            onCheckUpdates={() => handleCheckForUpdates(true)}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          {currentView === 'profile' && (
+            <MotionView key="profile">
+              <ProfileView
+                onBackToDashboard={handleExitToDashboard}
+                onStartWeakPractice={handleStartWeakPractice}
+                onReloadData={reloadData}
+                onCheckUpdates={() => handleCheckForUpdates(true)}
+              />
+            </MotionView>
+          )}
 
-        {currentView === 'dashboard' && (
-          <Dashboard
-            decks={decks}
-            unfinishedSessions={unfinishedSessions}
-            stats={overallStats}
-            onStartSession={handleStartSession}
-            onResumeSession={handleResumeSession}
-            onRestartSession={handleRestartSession}
-            onDeleteSession={handleDeleteSession}
-            onStartWrongQuestionsSession={handleStartWrongQuestionsSession}
-            onResetDeckProgress={handleResetDeckProgress}
-            onResetAllProgress={handleResetAllProgress}
-            onOpenExplorer={handleOpenExplorer}
-            onStartFlashcard={handleStartFlashcard}
-            onStartCustomSession={handleStartCustomSession}
-            onOpenSyncModal={() => setSyncModalOpen(true)}
-            onOpenBusyModal={() => setBusyModalOpen(true)}
-            onReloadData={reloadData}
-          />
-        )}
+          {currentView === 'dashboard' && (
+            <MotionView key="dashboard">
+              <Dashboard
+                decks={decks}
+                unfinishedSessions={unfinishedSessions}
+                stats={overallStats}
+                onStartSession={handleStartSession}
+                onResumeSession={handleResumeSession}
+                onRestartSession={handleRestartSession}
+                onDeleteSession={handleDeleteSession}
+                onStartWrongQuestionsSession={handleStartWrongQuestionsSession}
+                onResetDeckProgress={handleResetDeckProgress}
+                onResetAllProgress={handleResetAllProgress}
+                onOpenExplorer={handleOpenExplorer}
+                onStartFlashcard={handleStartFlashcard}
+                onStartCustomSession={handleStartCustomSession}
+                onOpenSyncModal={() => setSyncModalOpen(true)}
+                onOpenBusyModal={() => setBusyModalOpen(true)}
+                onReloadData={reloadData}
+              />
+            </MotionView>
+          )}
 
-        {currentView === 'study' && activeSession && (
-          <StudyArena
-            key={activeSession.id}
-            session={activeSession}
-            questions={sessionQuestions}
-            onExit={handleExitToDashboard}
-            onUpdateSession={(updated) => setActiveSession(updated)}
-            onPracticeWrongQuestions={(wrongQs, deckId, deckTitle) =>
-              handleStartWrongQuestionsSession(deckId, deckTitle, wrongQs)
-            }
-          />
-        )}
+          {currentView === 'study' && activeSession && (
+            <MotionView key={`study-${activeSession.id}`}>
+              <StudyArena
+                key={activeSession.id}
+                session={activeSession}
+                questions={sessionQuestions}
+                onExit={handleExitToDashboard}
+                onUpdateSession={(updated) => setActiveSession(updated)}
+                onPracticeWrongQuestions={(wrongQs, deckId, deckTitle) =>
+                  handleStartWrongQuestionsSession(deckId, deckTitle, wrongQs)
+                }
+              />
+            </MotionView>
+          )}
 
-        {currentView === 'exam' && activeSession && (
-          <ExamArena
-            key={activeSession.id}
-            session={activeSession}
-            questions={sessionQuestions}
-            onFinishExam={handleFinishExam}
-            onExit={handleExitToDashboard}
-            onUpdateSession={(updated) => setActiveSession(updated)}
-          />
-        )}
+          {currentView === 'exam' && activeSession && (
+            <MotionView key={`exam-${activeSession.id}`}>
+              <ExamArena
+                key={activeSession.id}
+                session={activeSession}
+                questions={sessionQuestions}
+                onFinishExam={handleFinishExam}
+                onExit={handleExitToDashboard}
+                onUpdateSession={(updated) => setActiveSession(updated)}
+              />
+            </MotionView>
+          )}
 
-        {currentView === 'flashcard' && flashcardQuestions.length > 0 && (
-          <FlashcardArena
-            key={activeSession?.id || 'flashcard'}
-            deckTitle={flashcardDeckTitle}
-            questions={flashcardQuestions}
-            initialSession={activeSession?.mode === 'flashcard' ? activeSession : undefined}
-            onExit={handleExitToDashboard}
-          />
-        )}
+          {currentView === 'flashcard' && flashcardQuestions.length > 0 && (
+            <MotionView key={`flashcard-${activeSession?.id || 'fc'}`}>
+              <FlashcardArena
+                key={activeSession?.id || 'flashcard'}
+                deckTitle={flashcardDeckTitle}
+                questions={flashcardQuestions}
+                initialSession={activeSession?.mode === 'flashcard' ? activeSession : undefined}
+                onExit={handleExitToDashboard}
+              />
+            </MotionView>
+          )}
 
-        {currentView === 'review' && examResult && (
-          <ExamReview
-            result={examResult}
-            onRetakeExam={() => {
-              const deck = decks.find((d) => d.title === examResult.deck_title);
-              if (deck) handleStartSession(deck, 'exam');
-              else handleExitToDashboard();
-            }}
-            onPracticeWrongQuestions={(wrongQuestions) => {
-              const deck = decks.find((d) => d.title === examResult.deck_title);
-              handleStartWrongQuestionsSession(
-                deck?.id || 'exam_' + Date.now(),
-                examResult.deck_title,
-                wrongQuestions
-              );
-            }}
-            onReturnDashboard={handleExitToDashboard}
-          />
-        )}
+          {currentView === 'review' && examResult && (
+            <MotionView key="review">
+              <ExamReview
+                result={examResult}
+                onRetakeExam={() => {
+                  const deck = decks.find((d) => d.title === examResult.deck_title);
+                  if (deck) handleStartSession(deck, 'exam');
+                  else handleExitToDashboard();
+                }}
+                onPracticeWrongQuestions={(wrongQuestions) => {
+                  const deck = decks.find((d) => d.title === examResult.deck_title);
+                  handleStartWrongQuestionsSession(
+                    deck?.id || 'exam_' + Date.now(),
+                    examResult.deck_title,
+                    wrongQuestions
+                  );
+                }}
+                onReturnDashboard={handleExitToDashboard}
+              />
+            </MotionView>
+          )}
 
-        {currentView === 'explorer' && (
-          <DeckExplorer
-            decks={decks}
-            initialFilter={explorerFilter}
-            onBackToDashboard={handleExitToDashboard}
-          />
-        )}
+          {currentView === 'explorer' && (
+            <MotionView key="explorer">
+              <DeckExplorer
+                decks={decks}
+                initialFilter={explorerFilter}
+                onBackToDashboard={handleExitToDashboard}
+              />
+            </MotionView>
+          )}
+        </AnimatePresence>
       </main>
 
       {/* Global Command Palette */}

@@ -43,6 +43,7 @@ import { busyModeService, type BusyModeState } from '@/services/busyModeService'
 import { dbService } from '@/services/db';
 import { toast } from '@/components/ui/toast';
 import { getAvailableTopics, getTopicConfig, resolveDeckTopic } from '@/config/topics';
+import { SpotlightCard, CountUp, TiltedCard, FloatingDust, DecryptedText } from '@/components/motion';
 
 interface DashboardProps {
   decks: Deck[];
@@ -286,7 +287,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-8 animate-in fade-in-50 duration-200">
+    <div className="max-w-6xl mx-auto px-6 py-8 space-y-8 animate-in fade-in-50 duration-200 relative">
+      <FloatingDust count={24} className="opacity-60" />
       {/* Sleek Segmented Topic Capsule Track */}
       <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 p-1.5 rounded-2xl bg-slate-100/90 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/90 dark:border-slate-800/80 shadow-xs">
         <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none py-0.5">
@@ -366,7 +368,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="relative z-10 space-y-2.5 max-w-2xl">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide">
             <span>{activeTopicConfig.icon}</span>
-            <span>{activeTopicConfig.badgeText}</span>
+            <DecryptedText text={activeTopicConfig.badgeText} speed={40} maxIterations={8} />
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-foreground">
@@ -401,7 +403,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           <div className="mt-2.5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground">
-            {displayStats.totalQuestions}
+            <CountUp to={displayStats.totalQuestions} />
           </div>
           <div className="mt-2 text-[11px] text-slate-500 dark:text-muted-foreground flex items-center justify-between">
             <span>{topicDecks.length} bộ đề</span>
@@ -425,7 +427,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           <div className="mt-2.5 text-2xl sm:text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
-            {displayStats.mastered}
+            <CountUp to={displayStats.mastered} />
           </div>
           <div className="mt-2 text-[11px] text-slate-500 dark:text-muted-foreground flex items-center justify-between">
             <span className="flex items-center gap-1 font-medium">
@@ -452,7 +454,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           <div className="mt-2.5 text-2xl sm:text-3xl font-black tracking-tight text-amber-600 dark:text-amber-400">
-            {displayStats.learning}
+            <CountUp to={displayStats.learning} />
           </div>
           <div className="mt-2 text-[11px] text-slate-500 dark:text-muted-foreground flex items-center justify-between">
             <span>Chu kỳ ngắt quãng</span>
@@ -476,7 +478,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           <div className="mt-2.5 text-2xl sm:text-3xl font-black tracking-tight text-sky-600 dark:text-sky-400">
-            {displayStats.bookmarked}
+            <CountUp to={displayStats.bookmarked} />
           </div>
           <div className="mt-2 text-[11px] text-slate-500 dark:text-muted-foreground flex items-center justify-between">
             <span>Câu hỏi lưu lại</span>
@@ -1599,122 +1601,130 @@ const CleanDeckCard: React.FC<CleanDeckCardProps> = ({ deck, type = 'topic', bad
     : isDe 
     ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25'
     : 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/25';
-  const dotColor = isMock ? 'bg-blue-600 dark:bg-blue-400' : isDe ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-indigo-600 dark:bg-indigo-400';
+  const dotColor = isMock ? 'bg-blue-500' : isDe ? 'bg-emerald-500' : 'bg-indigo-500';
+  const spotlightColor = isMock 
+    ? 'rgba(59, 130, 246, 0.16)' 
+    : isDe 
+    ? 'rgba(16, 185, 129, 0.16)' 
+    : 'rgba(99, 102, 241, 0.16)';
 
   return (
-    <Card 
-      onClick={onClick}
-      className="p-6 sm:p-7 border border-border hover:border-primary/50 bg-card hover:bg-card/90 transition-all duration-200 cursor-pointer group shadow-2xs rounded-2xl flex flex-col justify-between min-h-[220px] relative overflow-hidden"
-    >
-      <div>
-        {/* Header badges row */}
-        <div className="flex items-center justify-between gap-2 relative z-10">
-          <span className={`text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-md border flex items-center gap-1.5 shadow-2xs ${badgeColor}`}>
-            <span className={`size-1.5 rounded-full ${dotColor}`} />
-            {displayBadge}
-          </span>
+    <TiltedCard maxRotate={5} scaleOnHover={1.015} className="rounded-2xl h-full">
+      <SpotlightCard 
+        onClick={onClick}
+        spotlightColor={spotlightColor}
+        className="p-6 sm:p-7 border border-border hover:border-primary/50 bg-card hover:bg-card/90 transition-all duration-200 cursor-pointer group shadow-2xs rounded-2xl flex flex-col justify-between min-h-[220px] relative overflow-hidden h-full"
+      >
+        <div>
+          {/* Header badges row */}
+          <div className="flex items-center justify-between gap-2 relative z-10">
+            <span className={`text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-md border flex items-center gap-1.5 shadow-2xs ${badgeColor}`}>
+              <span className={`size-1.5 rounded-full ${dotColor}`} />
+              {displayBadge}
+            </span>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            {activeSession ? (
-              <Badge variant="warning" className="text-[10px] font-mono px-2 py-0.5 gap-1.5 font-bold shadow-xs">
-                <span className="size-2 rounded-full bg-amber-500 inline-block animate-pulse" />
-                Đang làm: {activeSession.current_index + 1}/{total}
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-[10.5px] font-mono text-muted-foreground bg-muted/40 px-2 py-0.5 border-border">
-                {total} câu hỏi
-              </Badge>
-            )}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {activeSession ? (
+                <Badge variant="warning" className="text-[10px] font-mono px-2 py-0.5 gap-1.5 font-bold shadow-xs">
+                  <span className="size-2 rounded-full bg-amber-500 inline-block animate-pulse" />
+                  Đang làm: {activeSession.current_index + 1}/{total}
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[10.5px] font-mono text-muted-foreground bg-muted/40 px-2 py-0.5 border-border">
+                  {total} câu hỏi
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Title & Description */}
+          <div className="mt-3.5 space-y-1 relative z-10">
+            <CardTitle className="text-base sm:text-lg font-bold text-foreground group-hover:text-primary transition-colors tracking-tight line-clamp-1">
+              {deck.title}
+            </CardTitle>
+            <CardDescription className="text-xs text-muted-foreground line-clamp-1">
+              {deck.source || 'Bộ đề luyện thi chứng chỉ tiêu chuẩn'}
+            </CardDescription>
+          </div>
+
+          {/* 3-Pill Quick Micro-Stats Indicator */}
+          <div className="grid grid-cols-3 gap-2 py-3 border-y border-border my-4 text-center relative z-10">
+            <div className="bg-secondary/60 rounded-xl p-2 border border-border">
+              <div className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">{mastered}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5 font-semibold">Đã thuộc</div>
+            </div>
+            <div className="bg-secondary/60 rounded-xl p-2 border border-border">
+              <div className="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 font-mono">{displayLearning}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5 font-semibold">{activeSession && learning === 0 ? 'Đã làm' : 'Đang học'}</div>
+            </div>
+            <div className="bg-secondary/60 rounded-xl p-2 border border-border">
+              <div className="text-xs sm:text-sm font-extrabold text-foreground font-mono">{unattempted}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5 font-semibold">Chưa học</div>
+            </div>
           </div>
         </div>
 
-        {/* Title & Description */}
-        <div className="mt-3.5 space-y-1 relative z-10">
-          <CardTitle className="text-base sm:text-lg font-bold text-foreground group-hover:text-primary transition-colors tracking-tight line-clamp-1">
-            {deck.title}
-          </CardTitle>
-          <CardDescription className="text-xs text-muted-foreground line-clamp-1">
-            {deck.source || 'Bộ đề luyện thi chứng chỉ tiêu chuẩn'}
-          </CardDescription>
-        </div>
+        {/* Progress & Bottom Actions */}
+        <div className="space-y-3 relative z-10">
+          {/* Progress Bar */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              {activeSession ? (
+                <>
+                  <span className="text-amber-500 font-bold flex items-center gap-1.5">
+                    <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    Tiến độ đang làm: <strong className="font-mono">{sessionPercent}%</strong>
+                  </span>
+                  <span className="font-mono text-[11px] font-semibold text-amber-500">{answeredCount}/{total} câu</span>
+                </>
+              ) : (
+                <>
+                  <span>Tiến độ ghi nhớ: <strong className="text-foreground font-mono">{percentMastered}%</strong></span>
+                  <span className="font-mono text-[11px]">{mastered}/{total} câu</span>
+                </>
+              )}
+            </div>
+            <div className="h-2.5 w-full rounded-full bg-secondary/80 overflow-hidden flex shadow-inner">
+              {activeSession ? (
+                <div
+                  className="bg-gradient-to-r from-amber-500 to-orange-400 h-full transition-all duration-300"
+                  style={{ width: `${sessionPercent}%` }}
+                  title={`Đang làm: ${answeredCount}/${total} câu`}
+                />
+              ) : (
+                <>
+                  {mastered > 0 && (
+                    <div
+                      className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-300"
+                      style={{ width: `${percentMastered}%` }}
+                      title={`Đã thuộc: ${mastered}`}
+                    />
+                  )}
+                  {learning > 0 && (
+                    <div
+                      className="bg-gradient-to-r from-amber-500 to-amber-400 h-full transition-all duration-300"
+                      style={{ width: `${total > 0 ? (learning / total) * 100 : 0}%` }}
+                      title={`Đang học: ${learning}`}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          </div>
 
-        {/* 3-Pill Quick Micro-Stats Indicator */}
-        <div className="grid grid-cols-3 gap-2 py-3 border-y border-border my-4 text-center relative z-10">
-          <div className="bg-secondary/60 rounded-xl p-2 border border-border">
-            <div className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">{mastered}</div>
-            <div className="text-[11px] text-muted-foreground mt-0.5 font-semibold">Đã thuộc</div>
-          </div>
-          <div className="bg-secondary/60 rounded-xl p-2 border border-border">
-            <div className="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 font-mono">{displayLearning}</div>
-            <div className="text-[11px] text-muted-foreground mt-0.5 font-semibold">{activeSession && learning === 0 ? 'Đã làm' : 'Đang học'}</div>
-          </div>
-          <div className="bg-secondary/60 rounded-xl p-2 border border-border">
-            <div className="text-xs sm:text-sm font-extrabold text-foreground font-mono">{unattempted}</div>
-            <div className="text-[11px] text-muted-foreground mt-0.5 font-semibold">Chưa học</div>
+          {/* Action Prompt */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground/80 group-hover:text-primary pt-2.5 transition-colors border-t border-border/40">
+            <span className="flex items-center gap-1.5 text-xs font-medium">
+              <Zap className="size-3.5 text-amber-400" /> Bấm để mở tùy chọn
+            </span>
+            <div className="flex items-center gap-1 font-bold text-xs text-primary opacity-90 group-hover:opacity-100 transition-all group-hover:translate-x-1">
+              <span>Vào học / thi</span>
+              <ArrowRight className="size-3.5" />
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Progress & Bottom Actions */}
-      <div className="space-y-3 relative z-10">
-        {/* Progress Bar */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            {activeSession ? (
-              <>
-                <span className="text-amber-500 font-bold flex items-center gap-1.5">
-                  <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  Tiến độ đang làm: <strong className="font-mono">{sessionPercent}%</strong>
-                </span>
-                <span className="font-mono text-[11px] font-semibold text-amber-500">{answeredCount}/{total} câu</span>
-              </>
-            ) : (
-              <>
-                <span>Tiến độ ghi nhớ: <strong className="text-foreground font-mono">{percentMastered}%</strong></span>
-                <span className="font-mono text-[11px]">{mastered}/{total} câu</span>
-              </>
-            )}
-          </div>
-          <div className="h-2.5 w-full rounded-full bg-secondary/80 overflow-hidden flex shadow-inner">
-            {activeSession ? (
-              <div
-                className="bg-gradient-to-r from-amber-500 to-orange-400 h-full transition-all duration-300"
-                style={{ width: `${sessionPercent}%` }}
-                title={`Đang làm: ${answeredCount}/${total} câu`}
-              />
-            ) : (
-              <>
-                {mastered > 0 && (
-                  <div
-                    className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-300"
-                    style={{ width: `${percentMastered}%` }}
-                    title={`Đã thuộc: ${mastered}`}
-                  />
-                )}
-                {learning > 0 && (
-                  <div
-                    className="bg-gradient-to-r from-amber-500 to-amber-400 h-full transition-all duration-300"
-                    style={{ width: `${total > 0 ? (learning / total) * 100 : 0}%` }}
-                    title={`Đang học: ${learning}`}
-                  />
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Action Prompt */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground/80 group-hover:text-primary pt-2.5 transition-colors border-t border-border/40">
-          <span className="flex items-center gap-1.5 text-xs font-medium">
-            <Zap className="size-3.5 text-amber-400" /> Bấm để mở tùy chọn
-          </span>
-          <div className="flex items-center gap-1 font-bold text-xs text-primary opacity-90 group-hover:opacity-100 transition-all group-hover:translate-x-1">
-            <span>Vào học / thi</span>
-            <ArrowRight className="size-3.5" />
-          </div>
-        </div>
-      </div>
-    </Card>
+      </SpotlightCard>
+    </TiltedCard>
   );
 };
 

@@ -15,6 +15,7 @@ import {
   LogIn
 } from 'lucide-react';
 import { useTheme } from '@/lib/theme';
+import { ClickSpark, FloatingDust, Magnet, TiltedCard } from '@/components/motion';
 
 interface LandingPageProps {
   onOpenAuthModal: (mode: 'signin' | 'signup') => void;
@@ -24,7 +25,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuthModal }) => 
   const { isDark, toggleTheme } = useTheme();
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20">
+    <ClickSpark sparkColors={['#6366f1', '#3b82f6', '#ec4899', '#f59e0b', '#10b981']} sparkCount={9} className="min-h-screen">
+      <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20">
       {/* =========================================================================
           TOP NAVBAR
          ========================================================================= */}
@@ -102,6 +104,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuthModal }) => 
          ========================================================================= */}
       <section className="relative overflow-hidden py-16 sm:py-24 px-6 border-b border-border/40">
         {/* Glow ambient backgrounds */}
+        <FloatingDust count={28} className="opacity-70 pointer-events-none" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[600px] rounded-full bg-gradient-to-tr from-primary/10 via-indigo-500/10 to-amber-500/10 blur-3xl pointer-events-none" />
 
         <div className="max-w-4xl mx-auto text-center space-y-6 relative z-10">
@@ -112,10 +115,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuthModal }) => 
           </div>
 
           {/* Main Title */}
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-foreground leading-[1.15]">
-            Chinh Phục Mọi Kỳ Thi Với{' '}
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-foreground leading-[1.2] max-w-4xl mx-auto">
+            Chinh Phục Mọi Kỳ Thi Với <br className="hidden sm:inline" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-indigo-500 to-amber-500">
-              Phương Pháp Ghi Nhớ Khoa Học
+              Phương Pháp Ghi Nhớ <span className="whitespace-nowrap">Khoa Học</span>
             </span>
           </h1>
 
@@ -126,24 +129,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuthModal }) => 
 
           {/* Main Call-to-Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Button
-              size="lg"
-              onClick={() => onOpenAuthModal('signin')}
-              className="w-full sm:w-auto h-12 px-7 rounded-2xl font-black text-sm bg-gradient-to-r from-primary via-indigo-600 to-violet-600 hover:opacity-95 text-white shadow-xl shadow-primary/25 cursor-pointer gap-2.5 group"
-            >
-              <span>Bắt đầu học ngay — Đăng nhập</span>
-              <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
+            <Magnet strength={0.2}>
+              <Button
+                size="lg"
+                onClick={() => onOpenAuthModal('signin')}
+                className="w-full sm:w-auto h-12 px-7 rounded-2xl font-black text-sm bg-gradient-to-r from-primary via-indigo-600 to-violet-600 hover:opacity-95 text-white shadow-xl shadow-primary/25 cursor-pointer gap-2.5 group whitespace-nowrap"
+              >
+                <span className="whitespace-nowrap">Bắt đầu học ngay — Đăng nhập</span>
+                <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Magnet>
 
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => onOpenAuthModal('signup')}
-              className="w-full sm:w-auto h-12 px-6 rounded-2xl font-bold text-sm border-border bg-card/80 hover:bg-muted text-foreground cursor-pointer gap-2 shadow-xs"
-            >
-              <UserPlus className="size-4 text-primary" />
-              <span>Tạo tài khoản học viên mới</span>
-            </Button>
+            <Magnet strength={0.2}>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => onOpenAuthModal('signup')}
+                className="w-full sm:w-auto h-12 px-6 rounded-2xl font-bold text-sm border-border bg-card/80 hover:bg-muted text-foreground cursor-pointer gap-2 shadow-xs whitespace-nowrap"
+              >
+                <UserPlus className="size-4 text-primary" />
+                <span className="whitespace-nowrap">Tạo tài khoản học viên mới</span>
+              </Button>
+            </Magnet>
           </div>
 
           {/* Trust Indicators */}
@@ -179,83 +186,99 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuthModal }) => 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Card 1: Leitner Box System */}
-          <div className="rounded-3xl border border-border bg-card/60 p-6 sm:p-8 space-y-4 shadow-sm hover:border-primary/40 transition-colors">
-            <div className="size-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-              <Brain className="size-6" />
-            </div>
-            <div className="space-y-1.5">
-              <h3 className="text-lg font-black text-foreground">
-                Ghi Nhớ Ngắt Quãng (Leitner 5 Hộp)
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Tự động thăng cấp câu hỏi khi trả lời đúng (Hộp 1 ➔ Hộp 5). Khi trả lời sai, câu hỏi lập tức quay về Hộp 1 để bạn luyện tập lại đúng trọng tâm, tiết kiệm 70% thời gian ôn luyện.
-              </p>
-            </div>
-            <div className="flex items-center gap-1 pt-2">
-              {[1, 2, 3, 4, 5].map((box) => (
-                <div key={box} className="flex-1 py-1.5 rounded-lg bg-muted/80 text-center text-[10px] font-bold text-muted-foreground border border-border/50">
-                  Hộp {box}
+          <TiltedCard maxRotate={5} scaleOnHover={1.015} className="h-full rounded-3xl">
+            <div className="rounded-3xl border border-border bg-card/60 p-6 sm:p-8 space-y-4 shadow-sm hover:border-primary/40 transition-colors h-full flex flex-col justify-between">
+              <div>
+                <div className="size-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4">
+                  <Brain className="size-6" />
                 </div>
-              ))}
+                <div className="space-y-1.5">
+                  <h3 className="text-lg font-black text-foreground">
+                    Ghi Nhớ Ngắt Quãng (Leitner 5 Hộp)
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Tự động thăng cấp câu hỏi khi trả lời đúng (Hộp 1 ➔ Hộp 5). Khi trả lời sai, câu hỏi lập tức quay về Hộp 1 để bạn luyện tập lại đúng trọng tâm, tiết kiệm 70% thời gian ôn luyện.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 pt-2">
+                {[1, 2, 3, 4, 5].map((box) => (
+                  <div key={box} className="flex-1 py-1.5 rounded-lg bg-muted/80 text-center text-[10px] font-bold text-muted-foreground border border-border/50">
+                    Hộp {box}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </TiltedCard>
 
           {/* Card 2: Local-First Offline Speed */}
-          <div className="rounded-3xl border border-border bg-card/60 p-6 sm:p-8 space-y-4 shadow-sm hover:border-primary/40 transition-colors">
-            <div className="size-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-              <Zap className="size-6" />
+          <TiltedCard maxRotate={5} scaleOnHover={1.015} className="h-full rounded-3xl">
+            <div className="rounded-3xl border border-border bg-card/60 p-6 sm:p-8 space-y-4 shadow-sm hover:border-primary/40 transition-colors h-full flex flex-col justify-between">
+              <div>
+                <div className="size-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4">
+                  <Zap className="size-6" />
+                </div>
+                <div className="space-y-1.5">
+                  <h3 className="text-lg font-black text-foreground">
+                    Kiến Trúc Local-First & Không Gián Đoạn
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Cơ sở dữ liệu SQLite hiệu năng cao nhúng trực tiếp ngay trong máy tính. Bạn có thể làm bài trên máy bay, quán cà phê không mạng mà không gặp bất kỳ độ trễ nào.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="size-3.5" />
+                <span>Phản hồi dưới 5ms • Không giật lag</span>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <h3 className="text-lg font-black text-foreground">
-                Kiến Trúc Local-First & Không Gián Đoạn
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Cơ sở dữ liệu SQLite hiệu năng cao nhúng trực tiếp ngay trong máy tính. Bạn có thể làm bài trên máy bay, quán cà phê không mạng mà không gặp bất kỳ độ trễ nào.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 pt-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="size-3.5" />
-              <span>Phản hồi dưới 5ms • Không giật lag</span>
-            </div>
-          </div>
+          </TiltedCard>
 
           {/* Card 3: Multi-User Isolation & Cloud Sync */}
-          <div className="rounded-3xl border border-border bg-card/60 p-6 sm:p-8 space-y-4 shadow-sm hover:border-primary/40 transition-colors">
-            <div className="size-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <Cloud className="size-6" />
+          <TiltedCard maxRotate={5} scaleOnHover={1.015} className="h-full rounded-3xl">
+            <div className="rounded-3xl border border-border bg-card/60 p-6 sm:p-8 space-y-4 shadow-sm hover:border-primary/40 transition-colors h-full flex flex-col justify-between">
+              <div>
+                <div className="size-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-4">
+                  <Cloud className="size-6" />
+                </div>
+                <div className="space-y-1.5">
+                  <h3 className="text-lg font-black text-foreground">
+                    Phân Tách Dữ Liệu & Đồng Bộ Đám Mây
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Mỗi tài khoản sở hữu không gian học tập riêng biệt. Đăng xuất an toàn tuyệt đối, người khác mở app sẽ không thấy bài dở dang hay điểm số của bạn.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                <CheckCircle2 className="size-3.5" />
+                <span>Bảo vệ quyền riêng tư cá nhân</span>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <h3 className="text-lg font-black text-foreground">
-                Phân Tách Dữ Liệu & Đồng Bộ Đám Mây
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Mỗi tài khoản sở hữu không gian học tập riêng biệt. Đăng xuất an toàn tuyệt đối, người khác mở app sẽ không thấy bài dở dang hay điểm số của bạn.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 pt-2 text-[11px] font-bold text-blue-600 dark:text-blue-400">
-              <CheckCircle2 className="size-3.5" />
-              <span>Bảo vệ quyền riêng tư cá nhân</span>
-            </div>
-          </div>
+          </TiltedCard>
 
           {/* Card 4: Exam Arena & Flashcard */}
-          <div className="rounded-3xl border border-border bg-card/60 p-6 sm:p-8 space-y-4 shadow-sm hover:border-primary/40 transition-colors">
-            <div className="size-12 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
-              <Award className="size-6" />
+          <TiltedCard maxRotate={5} scaleOnHover={1.015} className="h-full rounded-3xl">
+            <div className="rounded-3xl border border-border bg-card/60 p-6 sm:p-8 space-y-4 shadow-sm hover:border-primary/40 transition-colors h-full flex flex-col justify-between">
+              <div>
+                <div className="size-12 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center mb-4">
+                  <Award className="size-6" />
+                </div>
+                <div className="space-y-1.5">
+                  <h3 className="text-lg font-black text-foreground">
+                    Phòng Thi Thực Chiến & Thẻ Flashcard
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Mô phỏng áp lực phòng thi thật với đồng hồ đếm ngược, đảo ngẫu nhiên đáp án, hỗ trợ phím tắt số 1-4 và lật thẻ Flashcard nhanh bằng phím Space.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 text-[11px] font-bold text-purple-600 dark:text-purple-400">
+                <CheckCircle2 className="size-3.5" />
+                <span>Tùy chỉnh 15 / 30 / 60 câu hỏi</span>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <h3 className="text-lg font-black text-foreground">
-                Phòng Thi Thực Chiến & Thẻ Flashcard
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Mô phỏng áp lực phòng thi thật với đồng hồ đếm ngược, đảo ngẫu nhiên đáp án, hỗ trợ phím tắt số 1-4 và lật thẻ Flashcard nhanh bằng phím Space.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 pt-2 text-[11px] font-bold text-purple-600 dark:text-purple-400">
-              <CheckCircle2 className="size-3.5" />
-              <span>Tùy chỉnh 15 / 30 / 60 câu hỏi</span>
-            </div>
-          </div>
+          </TiltedCard>
         </div>
       </section>
 
@@ -270,7 +293,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuthModal }) => 
 
           <div className="space-y-2 max-w-xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
-              Sẵn Sàng Nâng Tầm Kết Quả Học Tập?
+              Sẵn Sàng Nâng Tầm Kết Quả <span className="whitespace-nowrap">Học Tập?</span>
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground">
               Đăng nhập hoặc tạo tài khoản mới để bắt đầu hành trình ôn luyện, tích lũy XP thăng cấp và làm chủ kiến thức ngay hôm nay.
@@ -281,17 +304,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuthModal }) => 
             <Button
               size="lg"
               onClick={() => onOpenAuthModal('signup')}
-              className="w-full sm:w-auto h-11 px-7 rounded-2xl font-black text-xs bg-primary hover:opacity-95 text-white shadow-lg shadow-primary/20 cursor-pointer"
+              className="w-full sm:w-auto h-11 px-7 rounded-2xl font-black text-xs bg-primary hover:opacity-95 text-white shadow-lg shadow-primary/20 cursor-pointer whitespace-nowrap"
             >
-              Tạo tài khoản học viên mới
+              <span className="whitespace-nowrap">Tạo tài khoản học viên mới</span>
             </Button>
             <Button
               variant="outline"
               size="lg"
               onClick={() => onOpenAuthModal('signin')}
-              className="w-full sm:w-auto h-11 px-6 rounded-2xl font-bold text-xs border-border hover:bg-muted cursor-pointer"
+              className="w-full sm:w-auto h-11 px-6 rounded-2xl font-bold text-xs border-border hover:bg-muted cursor-pointer whitespace-nowrap"
             >
-              Đăng nhập vào tài khoản
+              <span className="whitespace-nowrap">Đăng nhập vào tài khoản</span>
             </Button>
           </div>
         </div>
@@ -307,5 +330,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenAuthModal }) => 
         </div>
       </footer>
     </div>
+  </ClickSpark>
   );
 };

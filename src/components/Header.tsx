@@ -22,6 +22,9 @@ import { signOutUser } from '@/services/firebaseService';
 import { toast } from '@/components/ui/toast';
 import { CURRENT_APP_VERSION } from '@/services/updateService';
 import { PetMenuPopover } from '@/components/StudyPet/PetMenuPopover';
+import { motion } from 'motion/react';
+import { cn } from '@/lib/utils';
+import { Magnet, ClickSpark } from '@/components/motion';
 
 interface HeaderProps {
   currentView: string;
@@ -90,13 +93,15 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-card/95 text-card-foreground backdrop-blur-md transition-colors shadow-2xs">
-      <div className="flex h-15 items-center justify-between px-6 max-w-7xl mx-auto">
-        {/* Left: Brand & Navigation */}
-        <div className="flex items-center gap-7">
-          <div 
-            onClick={() => onNavigate('dashboard')}
-            className="flex items-center gap-3 cursor-pointer group select-none py-1"
-          >
+      <ClickSpark sparkCount={8} sparkRadius={22}>
+        <div className="flex h-15 items-center justify-between px-6 max-w-7xl mx-auto">
+          {/* Left: Brand & Navigation */}
+          <div className="flex items-center gap-7">
+            <Magnet padding={20} strength={3.5}>
+              <div 
+                onClick={() => onNavigate('dashboard')}
+                className="flex items-center gap-3 cursor-pointer group select-none py-1"
+              >
             {/* Logo Chữ K */}
             <div className="relative flex size-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-900 p-[1.5px] border border-slate-700/60 shadow-md shadow-indigo-500/25 group-hover:shadow-indigo-500/45 group-hover:scale-105 transition-all duration-300">
               <div className="flex size-full items-center justify-center rounded-[14px] bg-slate-950/95 overflow-hidden">
@@ -158,49 +163,63 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
           </div>
+        </Magnet>
 
-          <nav className="hidden md:flex items-center gap-1.5 text-sm font-medium">
-            <Button
-              variant={currentView === 'dashboard' ? 'secondary' : 'ghost'}
-              size="sm"
+        <nav className="hidden md:flex items-center gap-1.5 p-1 rounded-2xl bg-muted/60 dark:bg-muted/40 border border-border/80 shadow-inner shrink-0">
+            <button
+              type="button"
               onClick={() => onNavigate('dashboard')}
-              className={`gap-1.5 h-9 px-3.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                currentView === 'dashboard' 
-                  ? 'bg-secondary text-secondary-foreground border border-border shadow-2xs' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
-              }`}
+              className={cn(
+                "relative flex items-center gap-2 h-8.5 px-4 text-xs font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap shrink-0 select-none",
+                currentView === 'dashboard' ? "text-primary-foreground font-black" : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+              )}
             >
+              {currentView === 'dashboard' && (
+                <motion.div
+                  layoutId="header-active-nav"
+                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  className="absolute inset-0 bg-primary rounded-xl shadow-md shadow-primary/30 -z-10"
+                />
+              )}
               <Home className="size-3.5" />
-              Dashboard
-            </Button>
-            <Button
-              variant={currentView === 'explorer' ? 'secondary' : 'ghost'}
-              size="sm"
+              <span>Dashboard</span>
+            </button>
+            <button
+              type="button"
               onClick={() => onNavigate('explorer')}
-              className={`gap-1.5 h-9 px-3.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                currentView === 'explorer' 
-                  ? 'bg-secondary text-secondary-foreground border border-border shadow-2xs' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
-              }`}
+              className={cn(
+                "relative flex items-center gap-2 h-8.5 px-4 text-xs font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap shrink-0 select-none",
+                currentView === 'explorer' ? "text-primary-foreground font-black" : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+              )}
             >
+              {currentView === 'explorer' && (
+                <motion.div
+                  layoutId="header-active-nav"
+                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  className="absolute inset-0 bg-primary rounded-xl shadow-md shadow-primary/30 -z-10"
+                />
+              )}
               <Search className="size-3.5" />
-              Tra cứu câu hỏi
-            </Button>
+              <span>Tra cứu câu hỏi</span>
+            </button>
           </nav>
         </div>
 
         {/* Right: High-Contrast Search Bar, User Profile, Sync & Theme Actions */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button
             onClick={onOpenCommandPalette}
-            className="hidden lg:flex items-center gap-2.5 h-9 px-3.5 rounded-xl border border-border bg-muted/60 hover:bg-muted text-xs text-foreground transition-all cursor-pointer shadow-2xs group"
+            className="hidden lg:flex items-center gap-2 h-9 px-3 rounded-xl border border-border/80 bg-background/80 hover:bg-muted text-xs text-foreground transition-all cursor-pointer shadow-2xs group shrink-0"
           >
             <Search className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="text-[11.5px] font-medium text-muted-foreground group-hover:text-foreground">Tìm kiếm câu hỏi hoặc đề thi...</span>
-            <kbd className="pointer-events-none inline-flex h-4.5 select-none items-center gap-0.5 rounded border border-border bg-card px-1.5 font-mono text-[9px] font-bold text-foreground shadow-2xs">
+            <span className="text-[11.5px] font-medium text-muted-foreground group-hover:text-foreground">Tìm kiếm câu hỏi...</span>
+            <kbd className="pointer-events-none inline-flex h-4.5 select-none items-center gap-0.5 rounded border border-border bg-muted/60 px-1.5 font-mono text-[9px] font-bold text-foreground shadow-2xs">
               <span className="text-[8.5px]">Ctrl</span>K
             </kbd>
           </button>
+
+          {/* Divider between Search and Actions */}
+          <div className="h-4.5 w-[1px] bg-border/70 mx-0.5 hidden xl:block" />
 
           {/* Busy Mode Config Button */}
           {onOpenBusyModal && (
@@ -212,7 +231,7 @@ export const Header: React.FC<HeaderProps> = ({
               className={`h-9 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer active:scale-95 gap-1.5 shadow-2xs ${
                 busyEnabled
                   ? 'border-amber-500/50 bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/30'
-                  : 'border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted'
+                  : 'border-border/80 bg-background/80 text-muted-foreground hover:text-foreground hover:bg-muted'
               }`}
             >
               <Zap className={`size-3.5 ${busyEnabled ? 'text-amber-500 fill-amber-500 animate-pulse' : 'text-amber-500'}`} />
@@ -232,7 +251,7 @@ export const Header: React.FC<HeaderProps> = ({
               size="sm"
               onClick={onOpenSyncModal}
               title="Xuất/Nhập file JSON tiến độ thủ công"
-              className="hidden sm:flex h-9 px-2.5 rounded-xl border border-border bg-muted/30 hover:bg-muted text-xs font-bold text-muted-foreground hover:text-foreground transition-all cursor-pointer active:scale-95 gap-1.5 shadow-2xs"
+              className="hidden sm:flex h-9 px-2.5 rounded-xl border border-border/80 bg-background/80 hover:bg-muted text-xs font-bold text-muted-foreground hover:text-foreground transition-all cursor-pointer active:scale-95 gap-1.5 shadow-2xs"
             >
               <ArrowRightLeft className="size-3.5 text-muted-foreground" />
               <span>JSON</span>
@@ -242,33 +261,47 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Study Pet Companion Control */}
           <PetMenuPopover />
 
+          {/* Divider between Tools and Preferences */}
+          <div className="h-4.5 w-[1px] bg-border/70 mx-0.5 hidden sm:block" />
+
           {/* Submerged Wallpaper Settings Modal Button */}
           {onOpenWallpaperModal && (
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={onOpenWallpaperModal}
-              title="Tùy chỉnh ảnh nền chìm toàn ứng dụng 🖼️"
-              className="h-9 w-9 rounded-xl border border-border bg-muted/40 text-foreground hover:bg-muted transition-transform active:scale-95 cursor-pointer shadow-2xs"
-            >
-              <ImageIcon className="size-4 text-indigo-500 hover:rotate-12 transition-transform" />
-            </Button>
+            <Magnet padding={12} strength={3}>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={onOpenWallpaperModal}
+                title="Tùy chỉnh ảnh nền chìm toàn ứng dụng 🖼️"
+                className="h-9 w-9 rounded-xl border border-border/80 bg-background/80 text-foreground hover:bg-muted transition-transform active:scale-95 cursor-pointer shadow-2xs"
+              >
+                <ImageIcon className="size-4 text-indigo-500 hover:rotate-12 transition-transform" />
+              </Button>
+            </Magnet>
           )}
 
           {/* Theme Switcher */}
-          <Button
-            variant="outline"
-            size="icon-sm"
-            onClick={toggleTheme}
-            title={isDark ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}
-            className="h-9 w-9 rounded-xl border border-border bg-muted/40 text-foreground hover:bg-muted transition-transform active:scale-95 cursor-pointer shadow-2xs"
-          >
-            {isDark ? (
-              <Sun className="size-4 text-amber-400 hover:rotate-45 transition-transform" />
-            ) : (
-              <Moon className="size-4 text-indigo-500 hover:-rotate-12 transition-transform" />
-            )}
-          </Button>
+          <Magnet padding={12} strength={3}>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={toggleTheme}
+              title={isDark ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}
+              className="h-9 w-9 rounded-xl border border-border/80 bg-background/80 text-foreground hover:bg-muted transition-transform active:scale-95 cursor-pointer shadow-2xs overflow-hidden"
+            >
+              <motion.div
+                key={isDark ? 'dark' : 'light'}
+                initial={{ rotate: -90, scale: 0.7, opacity: 0 }}
+                animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+              >
+                {isDark ? (
+                  <Sun className="size-4 text-amber-400" />
+                ) : (
+                  <Moon className="size-4 text-indigo-500" />
+                )}
+              </motion.div>
+            </Button>
+          </Magnet>
 
           {/* New Version Alert Badge */}
           {hasPendingUpdate && (
@@ -282,6 +315,9 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Bản mới!</span>
             </button>
           )}
+
+          {/* Divider before User Profile */}
+          <div className="h-4.5 w-[1px] bg-border/70 mx-0.5" />
 
           {/* ================================================================= */}
           {/* USER AUTH & PROFILE DROPDOWN MENU */}
@@ -321,7 +357,12 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* Dropdown Menu Popup */}
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-border bg-card/95 backdrop-blur-xl p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 space-y-1">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute right-0 mt-2 w-64 rounded-2xl border border-border bg-card/95 backdrop-blur-xl p-2 shadow-2xl z-50 space-y-1"
+                >
                   {/* User Info Header */}
                   <div className="px-3 py-2 border-b border-border/80">
                     <div className="text-xs font-bold text-foreground truncate">
@@ -397,7 +438,7 @@ export const Header: React.FC<HeaderProps> = ({
                       <span>Đăng xuất</span>
                     </button>
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
           ) : (
@@ -412,6 +453,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
       </div>
+      </ClickSpark>
     </header>
   );
 };
