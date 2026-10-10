@@ -680,10 +680,7 @@ export const StudyArena: React.FC<StudyArenaProps> = ({
                 onClick={() => handleSelectOption(idx)}
                 className={`flex items-start gap-3.5 p-4 rounded-xl border transition-colors select-none shadow-2xs ${optionStyle}`}
               >
-                <div 
-                  className={`flex size-6 shrink-0 items-center justify-center rounded-md border text-xs font-mono ${badgeStyle}`}
-                  title={`Phím tắt: Số ${idx + 1}`}
-                >
+                <div className={`flex size-6 shrink-0 items-center justify-center rounded-md border text-xs font-mono ${badgeStyle}`}>
                   {letter}
                 </div>
 

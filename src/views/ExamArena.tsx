@@ -327,7 +327,6 @@ export const ExamArena = ({
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'bg-muted text-muted-foreground border-border'
                       }`}
-                      title={`Phím tắt: Số ${idx + 1}`}
                     >
                       {letter}
                     </div>

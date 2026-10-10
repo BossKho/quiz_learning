@@ -93,10 +93,10 @@ describe('updateService', () => {
 
     it('returns hasUpdate false when on latest version', async () => {
       const mockRelease = {
-        tag_name: 'v3.2.0',
-        name: 'Ver 3.2',
+        tag_name: 'v3.2.1',
+        name: 'Ver 3.2.1',
         published_at: '2026-10-07T12:00:00Z',
-        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v3.2.0',
+        html_url: 'https://github.com/BossKho/quiz_learning/releases/tag/v3.2.1',
         body: 'Latest release',
         assets: [],
       };
